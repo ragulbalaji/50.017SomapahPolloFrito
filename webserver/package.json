@@ -1,0 +1,11 @@
+{
+  "name": "somapahpollofrito",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "node server.js"
+  },
+  "author": "RAGUL BALAJI",
+  "license": "CONTACT RAGULBALAJI@CTF.SG FOR LICENSE"
+}
