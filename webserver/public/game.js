@@ -18,7 +18,7 @@ function init () {
 const scene = new THREE.Scene()
 scene.background = new THREE.Color(0x79A6FF)
 
-const geometry = new THREE.PlaneGeometry(16, 16, 16 - 1, 16 - 1)
+const geometry = new THREE.PlaneGeometry(128, 128, 128 - 1, 128 - 1)
 geometry.rotateX(-Math.PI / 2)
 
 const material = new THREE.MeshNormalMaterial({ flatShading: true })
@@ -29,17 +29,17 @@ makeChunk(0, 0)
 function makeChunk (x0, y0) {
   const vertices = chunk.geometry.attributes.position.array
   noise.seed(42)
-  for (let y = 0; y < 16; y++) {
-    for (let x = 0; x < 16; x++) {
-      const i = 3 * (y * 16 + x)
-      vertices[i + 1] = noise.simplex2((x0 + x) / 8, (y0 + y) / 8)
+  for (let y = 0; y < 128; y++) {
+    for (let x = 0; x < 128; x++) {
+      const i = 3 * (y * 128 + x)
+      vertices[i + 1] = noise.simplex2((x0 + x) / 8, (y0 + y) / 8) + noise.simplex2((x0 + x) / 128, (y0 + y) / 128) * 8
     }
   }
   chunk.geometry.attributes.position.needsUpdate = true
 }
 
-camera.position.y = 5
-camera.position.z = -10
+camera.position.y = 8
+camera.position.z = -16
 camera.lookAt(0, 0, 0)
 
 let xxx = 0
@@ -47,9 +47,8 @@ let xxx = 0
 function animate () {
   requestAnimationFrame(animate)
 
-  makeChunk(xxx, 0)
-  xxx += 0.1
-  chunk.rotation.y += 0.01
+  makeChunk(0, xxx)
+  xxx += 1
   renderer.render(scene, camera)
 
   stats.update()
