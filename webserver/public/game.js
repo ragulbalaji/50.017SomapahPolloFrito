@@ -25,21 +25,29 @@ const material = new THREE.MeshNormalMaterial({ flatShading: true })
 const chunk = new THREE.Mesh(geometry, material)
 scene.add(chunk)
 
+let maxh = 0
 makeChunk(0, 0)
 function makeChunk (x0, y0) {
   const vertices = chunk.geometry.attributes.position.array
-  noise.seed(42)
+  maxh = 8
+  noise.seed(0)
   for (let y = 0; y < 128; y++) {
     for (let x = 0; x < 128; x++) {
       const i = 3 * (y * 128 + x)
-      vertices[i + 1] = noise.simplex2((x0 + x) / 8, (y0 + y) / 8) + noise.simplex2((x0 + x) / 128, (y0 + y) / 128) * 8
+      const r = Math.abs(noise.simplex2((x0 + x) / 48, (y0 + y) / 48)) < 0.2
+      const h = noise.simplex2((x0 + x) / 4, (y0 + y) / 4) +
+      noise.simplex2((x0 + x) / 128, (y0 + y) / 128) * 4 +
+      Math.max(0, noise.simplex2((x0 + x) / 1024, (y0 + y) / 1024) * 32)
+      vertices[i + 1] = Math.max(0, h)
+      if (r && vertices[i + 1] < 3) { vertices[i + 1] *= 0.2 }
+      maxh = Math.max(maxh, vertices[i + 1])
     }
   }
   chunk.geometry.attributes.position.needsUpdate = true
 }
 
 camera.position.y = 8
-camera.position.z = -16
+camera.position.z = -64
 camera.lookAt(0, 0, 0)
 
 let xxx = 0
@@ -48,7 +56,9 @@ function animate () {
   requestAnimationFrame(animate)
 
   makeChunk(0, xxx)
-  xxx += 1
+  xxx += 3
+  camera.position.y = Math.ceil(maxh + 1)
+  // camera.lookAt(0, 0, 0)
   renderer.render(scene, camera)
 
   stats.update()
