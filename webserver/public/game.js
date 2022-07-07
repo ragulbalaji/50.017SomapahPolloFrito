@@ -80,7 +80,8 @@ const material = new THREE.ShaderMaterial({
   `
 })
 
-const chunk = new THREE.Mesh(geometry, material)
+const material2 = new THREE.MeshNormalMaterial({ flatShading: true })
+const chunk = new THREE.Mesh(geometry, material2)
 scene.add(chunk)
 
 let maxh = 0
@@ -119,7 +120,7 @@ function animate () {
 
   makeChunk(0, xxx)
   xxx += 3
-  camera.position.y = Math.ceil(maxh + 1)
+  // camera.position.y = Math.ceil(maxh + 1)
   // camera.lookAt(0, 0, 0);
   orbitControls.update()
   renderer.render(scene, camera)
