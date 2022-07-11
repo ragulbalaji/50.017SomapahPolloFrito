@@ -28,7 +28,9 @@ function init () {
 const scene = new THREE.Scene()
 scene.background = new THREE.Color(0x79a6ff)
 
-const geometry = new THREE.PlaneGeometry(128, 128, 128 - 1, 128 - 1)
+const CHUNK_SIZE = 128
+const CHUNK_SCALE = 1
+const geometry = new THREE.PlaneGeometry(CHUNK_SIZE * CHUNK_SCALE, CHUNK_SIZE * CHUNK_SCALE, CHUNK_SIZE - 1, CHUNK_SIZE - 1)
 geometry.rotateX(-Math.PI / 2)
 
 const material = new THREE.ShaderMaterial({
@@ -39,11 +41,11 @@ const material = new THREE.ShaderMaterial({
   void main() {
     vPosition = position;
     vUV = uv;
-    if (position.y < 0.1) {
-      sea = 1.0;
-    } else {
-      sea = 0.0;
-    }
+    // if (position.y < 0.1) {
+    //   sea = 1.0;
+    // } else {
+    //   sea = 0.0;
+    // }
     
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }
@@ -71,10 +73,10 @@ const material = new THREE.ShaderMaterial({
     //   vec3 mixedColour = mix(blue, white, remap(0.5, 1.0, depth));
     //   gl_FragColor = vec4(mixedColour, 1.0);
     // }
-    if (sea > 0.0) {
-      gl_FragColor = vec4(0.1, 0.2, vUV.x * vUV.y + 0.2, 1.0);
+    if (vUV.x > 0.8 && vUV.y > 0.8) {
+      gl_FragColor = vec4(0.1, 0.2, 0.7 - vPosition.y, 1.0);
     } else {
-      gl_FragColor = vec4(1.0 - vUV.x, vUV.y, 0.0, 1.0);
+      gl_FragColor = vec4(vUV.x, vUV.y, 0.0, 1.0);
     }
     
   }
@@ -140,39 +142,38 @@ function makeChunk (x0, y0) {
   const vertices = chunk.geometry.attributes.position.array
   const uv = chunk.geometry.attributes.uv.array
   maxh = 8
-  const seed = 0
+  const seed = 1
   noise.seed(seed)
-  for (let y = 0; y < 128; y++) {
-    for (let x = 0; x < 128; x++) {
-      const i = 3 * (y * 128 + x)
-      const r = Math.abs(noise.simplex2((x0 + x) / 48, (y0 + y) / 48)) < 0.2
-      const h =
-        noise.simplex2((x0 + x) / 4, (y0 + y) / 4) +
-        noise.simplex2((x0 + x) / 128, (y0 + y) / 128) * 4 +
-        Math.max(0, noise.simplex2((x0 + x) / 1024, (y0 + y) / 1024) * 32)
-      vertices[i + 1] = Math.max(0, h)
-      if (r && vertices[i + 1] < 3) {
-        vertices[i + 1] *= 0.2
-      }
-      maxh = Math.max(maxh, vertices[i + 1])
-
-      const j = 2 * (y * 128 + x)
-      uv[j] = noise.simplex2((x0 + x) / 256, (y0 + y) / 256)
-      uv[j + 1] = noise.simplex2((x0 + x) / 256, (y0 + y) / 256)
-    }
-  }
-
-  noise.seed(seed + 1)
-  for (let y = 0; y < 128; y++) {
-    for (let x = 0; x < 128; x++) {
-      const j = 2 * (y * 128 + x)
+  for (let y = 0; y < CHUNK_SIZE; y++) {
+    for (let x = 0; x < CHUNK_SIZE; x++) {
+      const j = 2 * (y * CHUNK_SIZE + x)
       const temp = (noise.simplex2((x0 + x) / 512, (y0 + y) / 512) + 1) / 2
       let rain = (noise.simplex2((x0 + x) / 256, (y0 + y) / 256) + 1) / 2
       rain = Math.min(rain, 1 - temp)
       uv[j] = temp
       uv[j + 1] = rain
+
+      const i = 3 * (y * CHUNK_SIZE + x)
+      let h =
+        noise.simplex2((x0 + x) / 4, (y0 + y) / 4) * (rain + 0.3) +
+        noise.simplex2((x0 + x) / 128, (y0 + y) / 128) * 4 +
+        Math.max(0, noise.simplex2((x0 + x) / 1024, (y0 + y) / 1024) * 32)
+      h *= CHUNK_SCALE
+      const r = Math.abs(noise.simplex2((x0 + x) / 96, (y0 + y) / 96)) < Math.min(0.1, Math.abs(h))
+      vertices[i + 1] = Math.max(0, h)
+      if (h < 0) {
+        uv[j] = 1
+        uv[j + 1] = 1
+      }
+      if (r && vertices[i + 1] < 3) {
+        vertices[i + 1] *= 0.2
+        uv[j] = 1
+        uv[j + 1] = 1
+      }
+      maxh = Math.max(maxh, vertices[i + 1])
     }
   }
+
   chunk.geometry.attributes.position.needsUpdate = true
   chunk.geometry.attributes.uv.needsUpdate = true
 }
