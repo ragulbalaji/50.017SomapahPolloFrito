@@ -28,7 +28,7 @@ function init () {
 const scene = new THREE.Scene()
 scene.background = new THREE.Color(0x79a6ff)
 
-const CHUNK_SIZE = 128
+const CHUNK_SIZE = 256
 const CHUNK_SCALE = 1
 const geometry = new THREE.PlaneGeometry(CHUNK_SIZE * CHUNK_SCALE, CHUNK_SIZE * CHUNK_SCALE, CHUNK_SIZE - 1, CHUNK_SIZE - 1)
 geometry.rotateX(-Math.PI / 2)
@@ -154,12 +154,11 @@ function makeChunk (x0, y0) {
       uv[j + 1] = rain
 
       const i = 3 * (y * CHUNK_SIZE + x)
-      let h =
+      const h =
         noise.simplex2((x0 + x) / 4, (y0 + y) / 4) * (rain + 0.3) +
         noise.simplex2((x0 + x) / 128, (y0 + y) / 128) * 4 +
         Math.max(0, noise.simplex2((x0 + x) / 1024, (y0 + y) / 1024) * 32)
-      h *= CHUNK_SCALE
-      const r = Math.abs(noise.simplex2((x0 + x) / 96, (y0 + y) / 96)) < Math.min(0.1, Math.abs(h))
+      const r = Math.abs(noise.simplex2((x0 + x) / 96, (y0 + y) / 96)) < Math.min(0.2, Math.abs((3 - h) / 8))
       vertices[i + 1] = Math.max(0, h)
       if (h < 0) {
         uv[j] = 1
