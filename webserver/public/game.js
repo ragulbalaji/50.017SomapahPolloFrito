@@ -32,6 +32,39 @@ const geometry = new THREE.PlaneGeometry(128, 128, 128 - 1, 128 - 1)
 geometry.rotateX(-Math.PI / 2)
 
 const material = new THREE.ShaderMaterial({
+  vertexShader: `
+  varying vec3 vPosition;
+  void main() {
+    vPosition = position;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+  `,
+  fragmentShader: `
+  varying vec3 vPosition;
+  float remap( float minval, float maxval, float curval )
+  {
+    return ( curval - minval ) / ( maxval - minval );
+  }
+
+  void main() {
+    float depth = vPosition.y / 16.0 + 0.1;
+    vec3 green = vec3(0.0, 0.0, 1.0);
+    vec3 blue = vec3(0.0, 1.0, 0.0);
+    vec3 white = vec3(1.0, 1.0, 1.0);
+
+    depth = clamp(depth, 0.0, 1.0);
+    if (depth < 0.5) {
+      vec3 mixedColour = mix(green, blue, remap(0.0, 0.5, depth));
+      gl_FragColor = vec4(mixedColour, 1.0);
+    } else {
+      vec3 mixedColour = mix(blue, white, remap(0.5, 1.0, depth));
+      gl_FragColor = vec4(mixedColour, 1.0);
+    }
+  }
+  `
+})
+
+const phongmaterial = new THREE.ShaderMaterial({
   uniforms: {
     Ka: { value: new THREE.Vector3(0.4, 0.9, 0.3) },
     Kd: { value: new THREE.Vector3(0.4, 0.9, 0.3) },
@@ -81,7 +114,7 @@ const material = new THREE.ShaderMaterial({
 })
 
 const material2 = new THREE.MeshNormalMaterial({ flatShading: true })
-const chunk = new THREE.Mesh(geometry, material2)
+const chunk = new THREE.Mesh(geometry, material)
 scene.add(chunk)
 
 let maxh = 0
