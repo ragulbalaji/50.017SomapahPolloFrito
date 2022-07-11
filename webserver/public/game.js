@@ -34,32 +34,49 @@ geometry.rotateX(-Math.PI / 2)
 const material = new THREE.ShaderMaterial({
   vertexShader: `
   varying vec3 vPosition;
+  varying vec2 vUV;
+  varying float sea;
   void main() {
     vPosition = position;
+    vUV = uv;
+    if (position.y < 0.1) {
+      sea = 1.0;
+    } else {
+      sea = 0.0;
+    }
+    
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }
   `,
   fragmentShader: `
   varying vec3 vPosition;
+  varying vec2 vUV;
+  varying float sea;
   float remap( float minval, float maxval, float curval )
   {
     return ( curval - minval ) / ( maxval - minval );
   }
 
   void main() {
-    float depth = vPosition.y / 16.0 + 0.1;
-    vec3 green = vec3(0.0, 0.0, 1.0);
-    vec3 blue = vec3(0.0, 1.0, 0.0);
-    vec3 white = vec3(1.0, 1.0, 1.0);
+    // float depth = vPosition.y / 16.0 + 0.1;
+    // vec3 green = vec3(0.0, 0.0, 1.0);
+    // vec3 blue = vec3(0.0, 1.0, 0.0);
+    // vec3 white = vec3(1.0, 1.0, 1.0);
 
-    depth = clamp(depth, 0.0, 1.0);
-    if (depth < 0.5) {
-      vec3 mixedColour = mix(green, blue, remap(0.0, 0.5, depth));
-      gl_FragColor = vec4(mixedColour, 1.0);
+    // depth = clamp(depth, 0.0, 1.0);
+    // if (depth < 0.5) {
+    //   vec3 mixedColour = mix(green, blue, remap(0.0, 0.5, depth));
+    //   gl_FragColor = vec4(mixedColour, 1.0);
+    // } else {
+    //   vec3 mixedColour = mix(blue, white, remap(0.5, 1.0, depth));
+    //   gl_FragColor = vec4(mixedColour, 1.0);
+    // }
+    if (sea > 0.0) {
+      gl_FragColor = vec4(0.1, 0.2, vUV.x * vUV.y + 0.2, 1.0);
     } else {
-      vec3 mixedColour = mix(blue, white, remap(0.5, 1.0, depth));
-      gl_FragColor = vec4(mixedColour, 1.0);
+      gl_FragColor = vec4(1.0 - vUV.x, vUV.y, 0.0, 1.0);
     }
+    
   }
   `
 })
@@ -121,8 +138,10 @@ let maxh = 0
 makeChunk(0, 0)
 function makeChunk (x0, y0) {
   const vertices = chunk.geometry.attributes.position.array
+  const uv = chunk.geometry.attributes.uv.array
   maxh = 8
-  noise.seed(0)
+  const seed = 0
+  noise.seed(seed)
   for (let y = 0; y < 128; y++) {
     for (let x = 0; x < 128; x++) {
       const i = 3 * (y * 128 + x)
@@ -136,9 +155,26 @@ function makeChunk (x0, y0) {
         vertices[i + 1] *= 0.2
       }
       maxh = Math.max(maxh, vertices[i + 1])
+
+      const j = 2 * (y * 128 + x)
+      uv[j] = noise.simplex2((x0 + x) / 256, (y0 + y) / 256)
+      uv[j + 1] = noise.simplex2((x0 + x) / 256, (y0 + y) / 256)
+    }
+  }
+
+  noise.seed(seed + 1)
+  for (let y = 0; y < 128; y++) {
+    for (let x = 0; x < 128; x++) {
+      const j = 2 * (y * 128 + x)
+      const temp = (noise.simplex2((x0 + x) / 512, (y0 + y) / 512) + 1) / 2
+      let rain = (noise.simplex2((x0 + x) / 256, (y0 + y) / 256) + 1) / 2
+      rain = Math.min(rain, 1 - temp)
+      uv[j] = temp
+      uv[j + 1] = rain
     }
   }
   chunk.geometry.attributes.position.needsUpdate = true
+  chunk.geometry.attributes.uv.needsUpdate = true
 }
 
 camera.position.y = 8
