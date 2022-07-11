@@ -1,40 +1,132 @@
-const stats = new Stats()
+const STEPS_PER_FRAME = 5;
+const GRAVITY = 30;
+const playerVelocity = new THREE.Vector3();
+const playerDirection = new THREE.Vector3();
+const playerPosition = new THREE.Vector3(0, 2, 0);
+const clock = new THREE.Clock();
+const keyStates = {};
+let playerOnFloor = true;
+
+const stats = new Stats();
 const renderer = new THREE.WebGLRenderer({
-  antialias: true,
-  precision: 'lowp'
-})
+    antialias: true,
+    precision: "lowp",
+});
 const camera = new THREE.PerspectiveCamera(
-  90,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  1000
-)
+    90,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000
+);
+camera.rotation.order = "YXZ";
 
-const orbitControls = new THREE.OrbitControls(camera, renderer.domElement)
+function getForwardVector() {
+    camera.getWorldDirection(playerDirection);
+    playerDirection.y = 0;
+    playerDirection.normalize();
 
-init()
-
-function init () {
-  stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
-  document.body.appendChild(stats.dom)
-
-  renderer.setPixelRatio(window.devicePixelRatio)
-  renderer.setSize(window.innerWidth, window.innerHeight)
-  document.body.appendChild(renderer.domElement)
-
-  window.addEventListener('resize', onWindowResize)
+    return playerDirection;
 }
 
-const scene = new THREE.Scene()
-scene.background = new THREE.Color(0x79a6ff)
+function getSideVector() {
+    camera.getWorldDirection(playerDirection);
+    playerDirection.y = 0;
+    playerDirection.normalize();
+    playerDirection.cross(camera.up);
 
-const CHUNK_SIZE = 256
-const CHUNK_SCALE = 1
-const geometry = new THREE.PlaneGeometry(CHUNK_SIZE * CHUNK_SCALE, CHUNK_SIZE * CHUNK_SCALE, CHUNK_SIZE - 1, CHUNK_SIZE - 1)
-geometry.rotateX(-Math.PI / 2)
+    return playerDirection;
+}
+
+function controls(deltaTime) {
+    // gives a bit of air control
+    const speedDelta = deltaTime * (playerOnFloor ? 25 : 15);
+
+    if (keyStates["KeyW"]) {
+        playerVelocity.add(getForwardVector().multiplyScalar(speedDelta));
+    }
+    if (keyStates["KeyS"]) {
+        playerVelocity.add(getForwardVector().multiplyScalar(-speedDelta));
+    }
+    if (keyStates["KeyA"]) {
+        playerVelocity.add(getSideVector().multiplyScalar(-speedDelta));
+    }
+    if (keyStates["KeyD"]) {
+        playerVelocity.add(getSideVector().multiplyScalar(speedDelta));
+    }
+    if (keyStates["KeyQ"]) {
+        // fly up
+        playerVelocity.y += speedDelta;
+    }
+    if (keyStates["KeyE"]) {
+        // fly down
+        playerVelocity.y -= speedDelta;
+    }
+
+    if (playerOnFloor) {
+        // jump
+        if (keyStates["Space"]) {
+            playerVelocity.y = 15;
+        }
+    }
+}
+
+function updatePlayer(deltaTime) {
+    let damping = Math.exp(-4 * deltaTime) - 1;
+
+    if (!playerOnFloor) {
+        playerVelocity.y -= GRAVITY * deltaTime;
+        // small air resistance
+        damping *= 0.1;
+    }
+
+    playerVelocity.addScaledVector(playerVelocity, damping);
+
+    const deltaPosition = playerVelocity.clone().multiplyScalar(deltaTime);
+
+    playerPosition.add(deltaPosition);
+
+    camera.position.copy(playerPosition);
+}
+
+init();
+
+function init() {
+    stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
+    document.body.appendChild(stats.dom);
+
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    window.addEventListener("resize", onWindowResize);
+
+    document.addEventListener("keydown", (event) => {
+        keyStates[event.code] = true;
+    });
+    document.addEventListener("keyup", (event) => {
+        keyStates[event.code] = false;
+    });
+    document.body.addEventListener("mousemove", (event) => {
+        camera.rotation.y -= event.movementX / 500;
+        camera.rotation.x -= event.movementY / 500;
+    });
+}
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x79a6ff);
+
+const CHUNK_SIZE = 256;
+const CHUNK_SCALE = 1;
+const geometry = new THREE.PlaneGeometry(
+    CHUNK_SIZE * CHUNK_SCALE,
+    CHUNK_SIZE * CHUNK_SCALE,
+    CHUNK_SIZE - 1,
+    CHUNK_SIZE - 1
+);
+geometry.rotateX(-Math.PI / 2);
 
 const material = new THREE.ShaderMaterial({
-  vertexShader: `
+    vertexShader: `
   varying vec3 vPosition;
   varying vec2 vUV;
   varying float sea;
@@ -50,7 +142,7 @@ const material = new THREE.ShaderMaterial({
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }
   `,
-  fragmentShader: `
+    fragmentShader: `
   varying vec3 vPosition;
   varying vec2 vUV;
   varying float sea;
@@ -80,19 +172,19 @@ const material = new THREE.ShaderMaterial({
     }
     
   }
-  `
-})
+  `,
+});
 
 const phongmaterial = new THREE.ShaderMaterial({
-  uniforms: {
-    Ka: { value: new THREE.Vector3(0.4, 0.9, 0.3) },
-    Kd: { value: new THREE.Vector3(0.4, 0.9, 0.3) },
-    Ks: { value: new THREE.Vector3(0.8, 0.8, 0.8) },
-    LightIntensity: { value: new THREE.Vector4(0.5, 0.5, 0.5, 1.0) },
-    LightPosition: { value: new THREE.Vector4(0.0, 2000.0, 0.0, 1.0) },
-    Shininess: { value: 10.0 }
-  },
-  vertexShader: `
+    uniforms: {
+        Ka: { value: new THREE.Vector3(0.4, 0.9, 0.3) },
+        Kd: { value: new THREE.Vector3(0.4, 0.9, 0.3) },
+        Ks: { value: new THREE.Vector3(0.8, 0.8, 0.8) },
+        LightIntensity: { value: new THREE.Vector4(0.5, 0.5, 0.5, 1.0) },
+        LightPosition: { value: new THREE.Vector4(0.0, 2000.0, 0.0, 1.0) },
+        Shininess: { value: 10.0 },
+    },
+    vertexShader: `
     varying vec3 Normal;
     varying vec3 Position;
 
@@ -102,7 +194,7 @@ const phongmaterial = new THREE.ShaderMaterial({
       gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
     }
   `,
-  fragmentShader: `
+    fragmentShader: `
     varying vec3 Normal;
     varying vec3 Position;
 
@@ -129,79 +221,97 @@ const phongmaterial = new THREE.ShaderMaterial({
     void main() {
       gl_FragColor = vec4(phong(), 1.0);
     }
-  `
-})
+  `,
+});
 
-const material2 = new THREE.MeshNormalMaterial({ flatShading: true })
-const chunk = new THREE.Mesh(geometry, material)
-scene.add(chunk)
+const material2 = new THREE.MeshNormalMaterial({ flatShading: true });
+const chunk = new THREE.Mesh(geometry, material);
+scene.add(chunk);
 
-let maxh = 0
-makeChunk(0, 0)
-function makeChunk (x0, y0) {
-  const vertices = chunk.geometry.attributes.position.array
-  const uv = chunk.geometry.attributes.uv.array
-  maxh = 8
-  const seed = 1
-  noise.seed(seed)
-  for (let y = 0; y < CHUNK_SIZE; y++) {
-    for (let x = 0; x < CHUNK_SIZE; x++) {
-      const j = 2 * (y * CHUNK_SIZE + x)
-      const temp = (noise.simplex2((x0 + x) / 512, (y0 + y) / 512) + 1) / 2
-      let rain = (noise.simplex2((x0 + x) / 256, (y0 + y) / 256) + 1) / 2
-      rain = Math.min(rain, 1 - temp)
-      uv[j] = temp
-      uv[j + 1] = rain
+let maxh = 0;
+makeChunk(0, 0);
+function makeChunk(x0, y0) {
+    const vertices = chunk.geometry.attributes.position.array;
+    const uv = chunk.geometry.attributes.uv.array;
+    maxh = 8;
+    const seed = 1;
+    noise.seed(seed);
+    for (let y = 0; y < CHUNK_SIZE; y++) {
+        for (let x = 0; x < CHUNK_SIZE; x++) {
+            const j = 2 * (y * CHUNK_SIZE + x);
+            const temp =
+                (noise.simplex2((x0 + x) / 512, (y0 + y) / 512) + 1) / 2;
+            let rain = (noise.simplex2((x0 + x) / 256, (y0 + y) / 256) + 1) / 2;
+            rain = Math.min(rain, 1 - temp);
+            uv[j] = temp;
+            uv[j + 1] = rain;
 
-      const i = 3 * (y * CHUNK_SIZE + x)
-      const h =
-        noise.simplex2((x0 + x) / 4, (y0 + y) / 4) * (rain + 0.3) +
-        noise.simplex2((x0 + x) / 128, (y0 + y) / 128) * 4 +
-        Math.max(0, noise.simplex2((x0 + x) / 1024, (y0 + y) / 1024) * 32)
-      const r = Math.abs(noise.simplex2((x0 + x) / 96, (y0 + y) / 96)) < Math.min(0.2, Math.abs((3 - h) / 8))
-      vertices[i + 1] = Math.max(0, h)
-      if (h < 0) {
-        uv[j] = 1
-        uv[j + 1] = 1
-      }
-      if (r && vertices[i + 1] < 3) {
-        vertices[i + 1] *= 0.2
-        uv[j] = 1
-        uv[j + 1] = 1
-      }
-      maxh = Math.max(maxh, vertices[i + 1])
+            const i = 3 * (y * CHUNK_SIZE + x);
+            const h =
+                noise.simplex2((x0 + x) / 4, (y0 + y) / 4) * (rain + 0.3) +
+                noise.simplex2((x0 + x) / 128, (y0 + y) / 128) * 4 +
+                Math.max(
+                    0,
+                    noise.simplex2((x0 + x) / 1024, (y0 + y) / 1024) * 32
+                );
+            const r =
+                Math.abs(noise.simplex2((x0 + x) / 96, (y0 + y) / 96)) <
+                Math.min(0.2, Math.abs((3 - h) / 8));
+            vertices[i + 1] = Math.max(0, h);
+            if (h < 0) {
+                uv[j] = 1;
+                uv[j + 1] = 1;
+            }
+            if (r && vertices[i + 1] < 3) {
+                vertices[i + 1] *= 0.2;
+                uv[j] = 1;
+                uv[j + 1] = 1;
+            }
+            maxh = Math.max(maxh, vertices[i + 1]);
+        }
     }
-  }
 
-  chunk.geometry.attributes.position.needsUpdate = true
-  chunk.geometry.attributes.uv.needsUpdate = true
+    chunk.geometry.attributes.position.needsUpdate = true;
+    chunk.geometry.attributes.uv.needsUpdate = true;
 }
 
-camera.position.y = 8
-camera.position.z = -64
-camera.lookAt(0, 0, 0)
-orbitControls.update()
+camera.position.y = 80;
+camera.position.z = -100;
+camera.lookAt(0, 0, 0);
 
-let xxx = 0
+let xxx = 0;
 
-function animate () {
-  requestAnimationFrame(animate)
+function animate() {
+    const deltaTime = Math.min(0.05, clock.getDelta()) / STEPS_PER_FRAME;
 
-  makeChunk(0, xxx)
-  xxx += 3
-  // camera.position.y = Math.ceil(maxh + 1)
-  // camera.lookAt(0, 0, 0);
-  orbitControls.update()
-  renderer.render(scene, camera)
+    for (let i = 0; i < STEPS_PER_FRAME; i++) {
+        controls(deltaTime);
+        updatePlayer(deltaTime);
+    }
 
-  stats.update()
+    makeChunk(0, xxx);
+    // xxx += 1;
+
+    // rotate camera around the center of the scene
+    // var quaternion = new THREE.Quaternion();
+    // var y_axis = new THREE.Vector3(0, 1, 0);
+    // camera.position.applyQuaternion(
+    //     quaternion.setFromAxisAngle(y_axis, Math.PI * 2 * 0.001)
+    // );
+    // camera.lookAt(scene.position);
+
+    renderer.render(scene, camera);
+
+    stats.update();
+
+    requestAnimationFrame(animate);
 }
 
-animate()
+animate();
 
-function onWindowResize () {
-  camera.aspect = window.innerWidth / window.innerHeight
-  camera.updateProjectionMatrix()
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
 
-  renderer.setSize(window.innerWidth, window.innerHeight)
+    renderer.setSize(window.innerWidth, window.innerHeight);
 }
