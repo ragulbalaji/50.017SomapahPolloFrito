@@ -4,8 +4,9 @@ const playerVelocity = new THREE.Vector3();
 const playerDirection = new THREE.Vector3();
 const playerPosition = new THREE.Vector3(0, 2, 0);
 const clock = new THREE.Clock();
-const keyStates = {};
+const keyStates = {}; // to store key presses
 let playerOnFloor = true;
+let mouseLock = true;
 
 const stats = new Stats();
 const renderer = new THREE.WebGLRenderer({
@@ -38,30 +39,52 @@ function getSideVector() {
 }
 
 function controls(deltaTime) {
-    // gives a bit of air control
-    const speedDelta = deltaTime * (playerOnFloor ? 25 : 15);
+    let speedDelta = deltaTime * (playerOnFloor ? 25 : 15);
 
-    if (keyStates["KeyW"]) {
+    // if shift is pressed then move at triple speed
+    if (keyStates["ShiftLeft"] || keyStates["ShiftRight"]) {
+        speedDelta *= 3;
+    }
+    if (keyStates["KeyW"] || keyStates["ArrowUp"]) {
+        // forward
         playerVelocity.add(getForwardVector().multiplyScalar(speedDelta));
     }
-    if (keyStates["KeyS"]) {
+    if (keyStates["KeyS"] || keyStates["ArrowDown"]) {
+        // backward
         playerVelocity.add(getForwardVector().multiplyScalar(-speedDelta));
     }
-    if (keyStates["KeyA"]) {
+    if (keyStates["KeyA"] || keyStates["ArrowLeft"]) {
+        // left
         playerVelocity.add(getSideVector().multiplyScalar(-speedDelta));
     }
-    if (keyStates["KeyD"]) {
+    if (keyStates["KeyD"] || keyStates["ArrowRight"]) {
+        // right
         playerVelocity.add(getSideVector().multiplyScalar(speedDelta));
     }
-    if (keyStates["KeyQ"]) {
+    if (keyStates["KeyQ"] || keyStates["KeyZ"]) {
         // fly up
         playerVelocity.y += speedDelta;
     }
-    if (keyStates["KeyE"]) {
+    if (keyStates["KeyE"] || keyStates["KeyX"]) {
         // fly down
         playerVelocity.y -= speedDelta;
     }
-
+    if (keyStates["KeyJ"]) {
+        // yaw left
+        camera.rotation.y += 0.01;
+    }
+    if (keyStates["KeyL"]) {
+        // yaw right
+        camera.rotation.y -= 0.01;
+    }
+    if (keyStates["KeyI"]) {
+        // pitch up
+        camera.rotation.x += 0.005;
+    }
+    if (keyStates["KeyK"]) {
+        // pitch down
+        camera.rotation.x -= 0.005;
+    }
     if (playerOnFloor) {
         // jump
         if (keyStates["Space"]) {
@@ -107,8 +130,16 @@ function init() {
         keyStates[event.code] = false;
     });
     document.body.addEventListener("mousemove", (event) => {
-        camera.rotation.y -= event.movementX / 500;
-        camera.rotation.x -= event.movementY / 500;
+        if (!mouseLock) {
+            camera.rotation.y -= event.movementX / 200;
+            camera.rotation.x -= event.movementY / 200;
+        }
+    });
+    document.body.addEventListener("mousedown", (event) => {
+        mouseLock = false;
+    });
+    document.body.addEventListener("mouseup", (event) => {
+        mouseLock = true;
     });
 }
 
@@ -291,14 +322,6 @@ function animate() {
 
     makeChunk(0, xxx);
     // xxx += 1;
-
-    // rotate camera around the center of the scene
-    // var quaternion = new THREE.Quaternion();
-    // var y_axis = new THREE.Vector3(0, 1, 0);
-    // camera.position.applyQuaternion(
-    //     quaternion.setFromAxisAngle(y_axis, Math.PI * 2 * 0.001)
-    // );
-    // camera.lookAt(scene.position);
 
     renderer.render(scene, camera);
 
