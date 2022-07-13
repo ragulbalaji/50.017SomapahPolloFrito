@@ -1,18 +1,34 @@
+///////////////////////////////////////////////////////////////////////////////
+// Constants
+
+const CHUNK_SIZE = 256;
+const CHUNK_SCALE = 1;
 const STEPS_PER_FRAME = 5;
 const GRAVITY = 30;
+const pointerSpeed = 1;
+const _euler = new THREE.Euler(0, 0, 0, "YXZ");
 const playerVelocity = new THREE.Vector3();
 const playerDirection = new THREE.Vector3();
-const playerPosition = new THREE.Vector3(0, 2, 0);
+const playerPosition = new THREE.Vector3(0, 3, 0);
 const clock = new THREE.Clock();
+const _PI_2 = Math.PI / 2;
+const blocker = document.getElementById("blocker");
+const instructions = document.getElementById("instructions");
+
 const keyStates = {}; // to store key presses
 let playerOnFloor = true;
-let mouseLock = true;
+let pointerLocked = false;
 
-const stats = new Stats();
+///////////////////////////////////////////////////////////////////////////////
+// Set up renderer, scene and camera
+
 const renderer = new THREE.WebGLRenderer({
     antialias: true,
     precision: "lowp",
 });
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x79a6ff);
+
 const camera = new THREE.PerspectiveCamera(
     90,
     window.innerWidth / window.innerHeight,
@@ -20,6 +36,14 @@ const camera = new THREE.PerspectiveCamera(
     1000
 );
 camera.rotation.order = "YXZ";
+camera.position.y = 80;
+camera.position.z = -100;
+camera.lookAt(0, 0, 0);
+
+const stats = new Stats();
+
+///////////////////////////////////////////////////////////////////////////////
+// Controls
 
 function getForwardVector() {
     camera.getWorldDirection(playerDirection);
@@ -69,22 +93,6 @@ function controls(deltaTime) {
         // fly down
         playerVelocity.y -= speedDelta;
     }
-    if (keyStates["KeyJ"]) {
-        // yaw left
-        camera.rotation.y += 0.01;
-    }
-    if (keyStates["KeyL"]) {
-        // yaw right
-        camera.rotation.y -= 0.01;
-    }
-    if (keyStates["KeyI"]) {
-        // pitch up
-        camera.rotation.x += 0.005;
-    }
-    if (keyStates["KeyK"]) {
-        // pitch down
-        camera.rotation.x -= 0.005;
-    }
     if (playerOnFloor) {
         // jump
         if (keyStates["Space"]) {
@@ -111,6 +119,52 @@ function updatePlayer(deltaTime) {
     camera.position.copy(playerPosition);
 }
 
+function onPointerLockChange() {
+    if (document.pointerLockElement === document.body) {
+        instructions.style.display = "none";
+        blocker.style.display = "none";
+        pointerLocked = true;
+    } else {
+        pointerLocked = false;
+        blocker.style.display = "block";
+        instructions.style.display = "";
+    }
+}
+
+function onMouseMovement(e) {
+    if (!pointerLocked) return;
+
+    const movementX = e.movementX || e.mozMovementX || e.webkitMovementX || 0;
+    const movementY = e.movementY || e.mozMovementY || e.webkitMovementY || 0;
+
+    _euler.setFromQuaternion(camera.quaternion);
+
+    _euler.y -= movementX * 0.002 * pointerSpeed;
+    _euler.x -= movementY * 0.002 * pointerSpeed;
+
+    const minPolarAngle = 0; // radians
+    const maxPolarAngle = Math.PI; // radians
+
+    _euler.x = Math.max(
+        _PI_2 - maxPolarAngle,
+        Math.min(_PI_2 - minPolarAngle, _euler.x)
+    );
+
+    camera.quaternion.setFromEuler(_euler);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Helpers
+
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Initialize
+
 init();
 
 function init() {
@@ -123,31 +177,27 @@ function init() {
 
     window.addEventListener("resize", onWindowResize);
 
-    document.addEventListener("keydown", (event) => {
-        keyStates[event.code] = true;
+    instructions.addEventListener("click", function () {
+        document.body.requestPointerLock =
+            document.body.requestPointerLock ||
+            document.body.mozRequestPointerLock;
+        document.body.requestPointerLock();
     });
-    document.addEventListener("keyup", (event) => {
-        keyStates[event.code] = false;
+
+    document.body.addEventListener("mousemove", onMouseMovement);
+    document.addEventListener("pointerlockchange", onPointerLockChange);
+
+    document.addEventListener("keydown", (e) => {
+        keyStates[e.code] = true;
     });
-    document.body.addEventListener("mousemove", (event) => {
-        if (!mouseLock) {
-            camera.rotation.y -= event.movementX / 200;
-            camera.rotation.x -= event.movementY / 200;
-        }
-    });
-    document.body.addEventListener("mousedown", (event) => {
-        mouseLock = false;
-    });
-    document.body.addEventListener("mouseup", (event) => {
-        mouseLock = true;
+    document.addEventListener("keyup", (e) => {
+        keyStates[e.code] = false;
     });
 }
 
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x79a6ff);
+///////////////////////////////////////////////////////////////////////////////
+// Geometry
 
-const CHUNK_SIZE = 256;
-const CHUNK_SCALE = 1;
 const geometry = new THREE.PlaneGeometry(
     CHUNK_SIZE * CHUNK_SCALE,
     CHUNK_SIZE * CHUNK_SCALE,
@@ -306,9 +356,8 @@ function makeChunk(x0, y0) {
     chunk.geometry.attributes.uv.needsUpdate = true;
 }
 
-camera.position.y = 80;
-camera.position.z = -100;
-camera.lookAt(0, 0, 0);
+///////////////////////////////////////////////////////////////////////////////
+// Animate
 
 let xxx = 0;
 
@@ -331,10 +380,3 @@ function animate() {
 }
 
 animate();
-
-function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-
-    renderer.setSize(window.innerWidth, window.innerHeight);
-}
