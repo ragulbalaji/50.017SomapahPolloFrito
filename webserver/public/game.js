@@ -9,7 +9,7 @@ const pointerSpeed = 2
 const _euler = new THREE.Euler(0, 0, 0, 'YXZ')
 const playerVelocity = new THREE.Vector3()
 const playerDirection = new THREE.Vector3()
-const playerPosition = new THREE.Vector3(0, 3, 0)
+const playerPosition = new THREE.Vector3(0, 128, 0)
 const clock = new THREE.Clock()
 const _PI_2 = Math.PI / 2
 const blocker = document.getElementById('blocker')
@@ -36,8 +36,8 @@ const camera = new THREE.PerspectiveCamera(
   1000
 )
 camera.rotation.order = 'YXZ'
-camera.position.y = 80
-camera.position.z = -100
+camera.position.y = -1
+camera.position.z = -1
 camera.lookAt(0, 0, 0)
 
 const stats = new Stats()
@@ -63,7 +63,7 @@ function getSideVector () {
 }
 
 function controls (deltaTime) {
-  let speedDelta = deltaTime * (playerOnFloor ? 100 : 25)
+  let speedDelta = deltaTime * (playerOnFloor ? 400 : 100)
 
   // if shift is pressed then move at triple speed
   if (keyStates.ShiftLeft || keyStates.ShiftRight) {
@@ -198,13 +198,13 @@ function init () {
 /// ////////////////////////////////////////////////////////////////////////////
 // Geometry
 
-const geometry = new THREE.PlaneGeometry(
-  CHUNK_SIZE * CHUNK_SCALE,
-  CHUNK_SIZE * CHUNK_SCALE,
-  CHUNK_SIZE - 1,
-  CHUNK_SIZE - 1
-)
-geometry.rotateX(-Math.PI / 2)
+// const geometry = new THREE.PlaneGeometry(
+//   CHUNK_SIZE * CHUNK_SCALE,
+//   CHUNK_SIZE * CHUNK_SCALE,
+//   CHUNK_SIZE - 1,
+//   CHUNK_SIZE - 1
+// )
+// geometry.rotateX(-Math.PI / 2)
 
 const material = new THREE.ShaderMaterial({
   vertexShader: `
@@ -256,62 +256,12 @@ const material = new THREE.ShaderMaterial({
   `
 })
 
-const phongmaterial = new THREE.ShaderMaterial({
-  uniforms: {
-    Ka: { value: new THREE.Vector3(0.4, 0.9, 0.3) },
-    Kd: { value: new THREE.Vector3(0.4, 0.9, 0.3) },
-    Ks: { value: new THREE.Vector3(0.8, 0.8, 0.8) },
-    LightIntensity: { value: new THREE.Vector4(0.5, 0.5, 0.5, 1.0) },
-    LightPosition: { value: new THREE.Vector4(0.0, 2000.0, 0.0, 1.0) },
-    Shininess: { value: 10.0 }
-  },
-  vertexShader: `
-    varying vec3 Normal;
-    varying vec3 Position;
-
-    void main() {
-      Normal = normalize(normalMatrix * normal);
-      Position = vec3(modelViewMatrix * vec4(position, 1.0));
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-    }
-  `,
-  fragmentShader: `
-    varying vec3 Normal;
-    varying vec3 Position;
-
-    uniform vec3 Ka;
-    uniform vec3 Kd;
-    uniform vec3 Ks;
-    uniform vec4 LightPosition;
-    uniform vec3 LightIntensity;
-    uniform float Shininess;
-
-    vec3 phong() {
-      vec3 n = normalize(Normal);
-      vec3 s = normalize(vec3(LightPosition) - Position);
-      vec3 v = normalize(vec3(-Position));
-      vec3 r = reflect(-s, n);
-
-      vec3 ambient = Ka;
-      vec3 diffuse = Kd * max(dot(s, n), 0.0);
-      vec3 specular = Ks * pow(max(dot(r, v), 0.0), Shininess);
-
-      return LightIntensity * (ambient + diffuse + specular);
-    }
-
-    void main() {
-      gl_FragColor = vec4(phong(), 1.0);
-    }
-  `
-})
-
-const material2 = new THREE.MeshNormalMaterial({ flatShading: true })
-const chunk = new THREE.Mesh(geometry, material)
-scene.add(chunk)
+// const material2 = new THREE.MeshNormalMaterial({ flatShading: true })
+// const chunk = new THREE.Mesh(geometry, material)
+// scene.add(chunk)
 
 let maxh = 0
-makeChunk(0, 0)
-function makeChunk (x0, y0) {
+function makeChunk (chunk, x0, y0) {
   const vertices = chunk.geometry.attributes.position.array
   const uv = chunk.geometry.attributes.uv.array
   maxh = 8
@@ -359,15 +309,36 @@ function makeChunk (x0, y0) {
 /// ////////////////////////////////////////////////////////////////////////////
 // Animate
 
-const xxx = 0
-makeChunk(0, xxx)
-
+const loadedChunks = new Map()
 function animate () {
   const deltaTime = Math.min(0.05, clock.getDelta()) / STEPS_PER_FRAME
 
   for (let i = 0; i < STEPS_PER_FRAME; i++) {
     controls(deltaTime)
     updatePlayer(deltaTime)
+  }
+
+  const chunkXX = Math.floor(camera.position.x / CHUNK_SIZE + 0.5)
+  const chunkZZ = Math.floor(camera.position.z / CHUNK_SIZE + 0.5)
+  const chunkName = `${chunkXX}$$${chunkZZ}`
+
+  if (!loadedChunks.has(chunkName)) {
+    const geometry = new THREE.PlaneGeometry(
+      CHUNK_SIZE * CHUNK_SCALE,
+      CHUNK_SIZE * CHUNK_SCALE,
+      CHUNK_SIZE - 1,
+      CHUNK_SIZE - 1
+    )
+    geometry.rotateX(-Math.PI / 2)
+
+    const chunk = new THREE.Mesh(geometry, material)
+    scene.add(chunk)
+
+    chunk.position.x = chunkXX * CHUNK_SIZE
+    chunk.position.z = chunkZZ * CHUNK_SIZE
+    makeChunk(chunk, (chunkXX - 0.5) * CHUNK_SIZE, (chunkZZ - 0.5) * CHUNK_SIZE)
+
+    loadedChunks.set(chunkName, chunk)
   }
 
   renderer.render(scene, camera)
