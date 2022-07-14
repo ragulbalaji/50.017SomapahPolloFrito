@@ -1,6 +1,7 @@
 /// ////////////////////////////////////////////////////////////////////////////
 // Constants
 
+const WORLD_SEED = Math.round(Math.random() * 4206969)
 const CHUNK_SIZE = 128
 const CHUNK_SCALE = 1
 const STEPS_PER_FRAME = 5
@@ -241,35 +242,36 @@ const material = new THREE.ShaderMaterial({
   }
 })
 
-// const material2 = new THREE.MeshNormalMaterial({ flatShading: true })
+const normal_material = new THREE.MeshNormalMaterial({ flatShading: true })
 
 let maxh = 0
-function makeChunk (chunk, x0, y0) {
+function makeChunk (chunk, x0, z0) {
+  x0 += 6969
+  z0 += 6969
   const vertices = chunk.geometry.attributes.position.array
   const uv = chunk.geometry.attributes.uv.array
   maxh = 8
-  const seed = 1
-  noise.seed(seed)
+  noise.seed(WORLD_SEED)
   for (let y = 0; y < CHUNK_SIZE; y++) {
     for (let x = 0; x < CHUNK_SIZE; x++) {
       const j = 2 * (y * CHUNK_SIZE + x)
       const temp =
-                (noise.simplex2((x0 + x) / 512, (y0 + y) / 512) + 1) / 2
-      let rain = (noise.simplex2((x0 + x) / 256, (y0 + y) / 256) + 1) / 2
+                (noise.simplex2((x0 + x) / 512, (z0 + y) / 512) + 1) / 2
+      let rain = (noise.simplex2((x0 + x) / 256, (z0 + y) / 256) + 1) / 2
       rain = Math.min(rain, 1 - temp)
       uv[j] = temp
       uv[j + 1] = rain
 
       const i = 3 * (y * CHUNK_SIZE + x)
       const h =
-                noise.simplex2((x0 + x) / 4, (y0 + y) / 4) * (rain + 0.3) +
-                noise.simplex2((x0 + x) / 128, (y0 + y) / 128) * 4 +
+                noise.simplex2((x0 + x) / 4, (z0 + y) / 4) * (rain + 0.3) +
+                noise.simplex2((x0 + x) / 128, (z0 + y) / 128) * 4 +
                 Math.max(
                   0,
-                  noise.simplex2((x0 + x) / 1024, (y0 + y) / 1024) * 32
+                  noise.simplex2((x0 + x) / 1024, (z0 + y) / 1024) * 32
                 )
       const r =
-                Math.abs(noise.simplex2((x0 + x) / 96, (y0 + y) / 96)) <
+                Math.abs(noise.simplex2((x0 + x) / 96, (z0 + y) / 96)) <
                 Math.min(0.2, Math.abs((3 - h) / 8))
       vertices[i + 1] = Math.max(0, h)
       if (h < 0) {
