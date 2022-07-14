@@ -184,48 +184,7 @@ function init () {
 /// ////////////////////////////////////////////////////////////////////////////
 // Geometry
 
-const tex_grass = new THREE.TextureLoader().load('assets/tex/grass.png')
-const tex_sky = new THREE.TextureLoader().load('assets/tex/sky.jpg')
-scene.background = tex_sky
-
-const material = new THREE.ShaderMaterial({
-  vertexShader: `varying vec3 vPosition;
-  varying vec2 vUV;
-  varying float sea;
-  void main() {
-    vPosition = position;
-    vUV = uv;
-    // if (position.y < 0.1) {
-    //   sea = 1.0;
-    // } else {
-    //   sea = 0.0;
-    // }
-    
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }`,
-  fragmentShader: `varying vec3 vPosition;
-  varying vec2 vUV;
-  varying float sea;
-  uniform sampler2D uTexture;
-
-  void main() {
-    if (vUV.x > 0.8 && vUV.y > 0.8) {
-      gl_FragColor = vec4(0.1, 0.2, 0.7 - vPosition.y, 1.0);
-    } else {
-      vec3 color = texture2D(uTexture, vUV).rgb;
-      gl_FragColor = vec4(color, 1.0);
-      // gl_FragColor = vec4(vUV.x, vUV.y, 0.0, 1.0);
-    }
-    
-  }`,
-  uniforms: {
-    uTexture: {
-      value: tex_grass
-    }
-  }
-})
-
-const normal_material = new THREE.MeshNormalMaterial({ flatShading: true })
+scene.background = TEXTURES.tex_sky
 
 let maxh = 0
 function makeChunk (chunk, x0, z0) {
@@ -307,7 +266,7 @@ function animate () {
         )
         geometry.rotateX(-Math.PI / 2)
 
-        const chunk = new THREE.Mesh(geometry, material)
+        const chunk = new THREE.Mesh(geometry, MATERIALS.material)
         scene.add(chunk)
 
         chunk.position.x = chunkXX * CHUNK_SIZE
