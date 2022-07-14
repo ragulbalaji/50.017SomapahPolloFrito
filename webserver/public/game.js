@@ -9,7 +9,7 @@ const pointerSpeed = 2
 const _euler = new THREE.Euler(0, 0, 0, 'YXZ')
 const playerVelocity = new THREE.Vector3()
 const playerDirection = new THREE.Vector3()
-const playerPosition = new THREE.Vector3(0, 128, 0)
+const playerPosition = new THREE.Vector3(0, 32, 0)
 const clock = new THREE.Clock()
 const _PI_2 = Math.PI / 2
 const blocker = document.getElementById('blocker')
@@ -36,9 +36,10 @@ const camera = new THREE.PerspectiveCamera(
   1000
 )
 camera.rotation.order = 'YXZ'
-camera.position.y = 3
-camera.position.z = 0
-camera.lookAt(5, 0, 10)
+camera.position.x = playerPosition.x
+camera.position.y = playerPosition.y
+camera.position.z = playerPosition.z
+camera.lookAt(16, 0, 0)
 
 const stats = new Stats()
 
