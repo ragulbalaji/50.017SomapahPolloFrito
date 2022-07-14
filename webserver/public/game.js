@@ -6,19 +6,23 @@ const CHUNK_SIZE = 128
 const CHUNK_SCALE = 1
 const STEPS_PER_FRAME = 5
 const GRAVITY = 30
-const pointerSpeed = 2
-const _euler = new THREE.Euler(0, 0, 0, 'YXZ')
+const POINTER_SPEED = 2
+const _PI_2 = Math.PI / 2
+const PLAYER_SPEED_GROUND = 400
+const PLAYER_SPEED_AIR = 200
+
+const clock = new THREE.Clock()
+const keyStates = {} // to store key presses
+const playerOnFloor = true
 const playerVelocity = new THREE.Vector3()
 const playerDirection = new THREE.Vector3()
 const playerPosition = new THREE.Vector3(0, 32, 0)
-const clock = new THREE.Clock()
-const _PI_2 = Math.PI / 2
+const eulerAngle = new THREE.Euler(0, 0, 0, 'YXZ')
+let pointerLocked = false
+
+// references
 const blocker = document.getElementById('blocker')
 const instructions = document.getElementById('instructions')
-
-const keyStates = {} // to store key presses
-const playerOnFloor = true
-let pointerLocked = false
 
 /// ////////////////////////////////////////////////////////////////////////////
 // Set up renderer, scene and camera
@@ -51,7 +55,6 @@ function getForwardVector () {
   camera.getWorldDirection(playerDirection)
   playerDirection.y = 0
   playerDirection.normalize()
-
   return playerDirection
 }
 
@@ -60,47 +63,27 @@ function getSideVector () {
   playerDirection.y = 0
   playerDirection.normalize()
   playerDirection.cross(camera.up)
-
   return playerDirection
 }
 
 function controls (deltaTime) {
-  let speedDelta = deltaTime * (playerOnFloor ? 400 : 100)
-
+  let speedDelta = deltaTime * (playerOnFloor ? PLAYER_SPEED_GROUND : PLAYER_SPEED_AIR)
   // if shift is pressed then move at triple speed
-  if (keyStates.ShiftLeft || keyStates.ShiftRight) {
-    speedDelta *= 3
-  }
-  if (keyStates.KeyW || keyStates.ArrowUp) {
-    // forward
-    playerVelocity.add(getForwardVector().multiplyScalar(speedDelta))
-  }
-  if (keyStates.KeyS || keyStates.ArrowDown) {
-    // backward
-    playerVelocity.add(getForwardVector().multiplyScalar(-speedDelta))
-  }
-  if (keyStates.KeyA || keyStates.ArrowLeft) {
-    // left
-    playerVelocity.add(getSideVector().multiplyScalar(-speedDelta))
-  }
-  if (keyStates.KeyD || keyStates.ArrowRight) {
-    // right
-    playerVelocity.add(getSideVector().multiplyScalar(speedDelta))
-  }
-  if (keyStates.KeyQ || keyStates.KeyZ) {
-    // fly up
-    playerVelocity.y += speedDelta
-  }
-  if (keyStates.KeyE || keyStates.KeyX) {
-    // fly down
-    playerVelocity.y -= speedDelta
-  }
-  if (playerOnFloor) {
-    // jump
-    if (keyStates.Space) {
-      playerVelocity.y = 15
-    }
-  }
+  if (keyStates.ShiftLeft || keyStates.ShiftRight) speedDelta *= 3
+  // move forward
+  if (keyStates.KeyW || keyStates.ArrowUp) playerVelocity.add(getForwardVector().multiplyScalar(speedDelta))
+  // move backward
+  if (keyStates.KeyS || keyStates.ArrowDown) playerVelocity.add(getForwardVector().multiplyScalar(-speedDelta))
+  // move left
+  if (keyStates.KeyA || keyStates.ArrowLeft) playerVelocity.add(getSideVector().multiplyScalar(-speedDelta))
+  // move right
+  if (keyStates.KeyD || keyStates.ArrowRight) playerVelocity.add(getSideVector().multiplyScalar(speedDelta))
+  // fly up
+  if (keyStates.KeyQ || keyStates.KeyZ) playerVelocity.y += speedDelta
+  // fly down
+  if (keyStates.KeyE || keyStates.KeyX) playerVelocity.y -= speedDelta
+  // jump if player on floor
+  if (playerOnFloor && keyStates.Space) playerVelocity.y = 15
 }
 
 function updatePlayer (deltaTime) {
@@ -113,11 +96,8 @@ function updatePlayer (deltaTime) {
   }
 
   playerVelocity.addScaledVector(playerVelocity, damping)
-
   const deltaPosition = playerVelocity.clone().multiplyScalar(deltaTime)
-
   playerPosition.add(deltaPosition)
-
   camera.position.copy(playerPosition)
 }
 
@@ -139,20 +119,20 @@ function onMouseMovement (e) {
   const movementX = e.movementX || e.mozMovementX || e.webkitMovementX || 0
   const movementY = e.movementY || e.mozMovementY || e.webkitMovementY || 0
 
-  _euler.setFromQuaternion(camera.quaternion)
+  eulerAngle.setFromQuaternion(camera.quaternion)
 
-  _euler.y -= movementX * 0.002 * pointerSpeed
-  _euler.x -= movementY * 0.002 * pointerSpeed
+  eulerAngle.y -= movementX * 0.002 * POINTER_SPEED
+  eulerAngle.x -= movementY * 0.002 * POINTER_SPEED
 
-  const minPolarAngle = 0 // radians
-  const maxPolarAngle = Math.PI // radians
+  const minPolarAngle = 0
+  const maxPolarAngle = Math.PI
 
-  _euler.x = Math.max(
+  eulerAngle.x = Math.max(
     _PI_2 - maxPolarAngle,
-    Math.min(_PI_2 - minPolarAngle, _euler.x)
+    Math.min(_PI_2 - minPolarAngle, eulerAngle.x)
   )
 
-  camera.quaternion.setFromEuler(_euler)
+  camera.quaternion.setFromEuler(eulerAngle)
 }
 
 /// ////////////////////////////////////////////////////////////////////////////
@@ -181,9 +161,9 @@ function init () {
 
   instructions.addEventListener('click', function () {
     document.body.requestPointerLock =
-            document.body.requestPointerLock ||
-            document.body.mozRequestPointerLock ||
-            document.body.webkitRequestPointerLock
+      document.body.requestPointerLock ||
+      document.body.mozRequestPointerLock ||
+      document.body.webkitRequestPointerLock
     document.body.requestPointerLock()
   })
 
