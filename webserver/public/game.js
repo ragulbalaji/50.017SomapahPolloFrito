@@ -304,27 +304,33 @@ function animate () {
     }
   }
 
-  const chunkXX = Math.floor(camera.position.x / CHUNK_SIZE + 0.5)
-  const chunkZZ = Math.floor(camera.position.z / CHUNK_SIZE + 0.5)
-  const chunkName = `${chunkXX}$$${chunkZZ}`
+  const chunkX = Math.floor(camera.position.x / CHUNK_SIZE + 0.5)
+  const chunkZ = Math.floor(camera.position.z / CHUNK_SIZE + 0.5)
+  for (let xoffset = -2; xoffset <= 2; xoffset++) {
+    for (let zoffset = -2; zoffset <= 2; zoffset++) {
+      const chunkXX = chunkX + xoffset
+      const chunkZZ = chunkZ + zoffset
+      const chunkName = `${chunkXX}$$${chunkZZ}`
 
-  if (!loadedChunks.has(chunkName)) {
-    const geometry = new THREE.PlaneGeometry(
-      CHUNK_SIZE * CHUNK_SCALE,
-      CHUNK_SIZE * CHUNK_SCALE,
-      CHUNK_SIZE - 1,
-      CHUNK_SIZE - 1
-    )
-    geometry.rotateX(-Math.PI / 2)
+      if (!loadedChunks.has(chunkName)) {
+        const geometry = new THREE.PlaneGeometry(
+          CHUNK_SIZE * CHUNK_SCALE,
+          CHUNK_SIZE * CHUNK_SCALE,
+          CHUNK_SIZE - 1,
+          CHUNK_SIZE - 1
+        )
+        geometry.rotateX(-Math.PI / 2)
 
-    const chunk = new THREE.Mesh(geometry, material)
-    scene.add(chunk)
+        const chunk = new THREE.Mesh(geometry, material)
+        scene.add(chunk)
 
-    chunk.position.x = chunkXX * CHUNK_SIZE
-    chunk.position.z = chunkZZ * CHUNK_SIZE
-    makeChunk(chunk, (chunkXX - 0.5) * CHUNK_SIZE, (chunkZZ - 0.5) * CHUNK_SIZE)
+        chunk.position.x = chunkXX * CHUNK_SIZE
+        chunk.position.z = chunkZZ * CHUNK_SIZE
+        makeChunk(chunk, (chunkXX - 0.5) * CHUNK_SIZE, (chunkZZ - 0.5) * CHUNK_SIZE)
 
-    loadedChunks.set(chunkName, chunk)
+        loadedChunks.set(chunkName, chunk)
+      }
+    }
   }
 
   renderer.render(scene, camera)
