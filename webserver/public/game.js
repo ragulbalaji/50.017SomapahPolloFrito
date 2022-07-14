@@ -200,14 +200,6 @@ function init () {
 /// ////////////////////////////////////////////////////////////////////////////
 // Geometry
 
-// const geometry = new THREE.PlaneGeometry(
-//   CHUNK_SIZE * CHUNK_SCALE,
-//   CHUNK_SIZE * CHUNK_SCALE,
-//   CHUNK_SIZE - 1,
-//   CHUNK_SIZE - 1
-// )
-// geometry.rotateX(-Math.PI / 2)
-
 const material = new THREE.ShaderMaterial({
   vertexShader: `
   varying vec3 vPosition;
@@ -259,8 +251,6 @@ const material = new THREE.ShaderMaterial({
 })
 
 // const material2 = new THREE.MeshNormalMaterial({ flatShading: true })
-// const chunk = new THREE.Mesh(geometry, material)
-// scene.add(chunk)
 
 let maxh = 0
 function makeChunk (chunk, x0, y0) {
