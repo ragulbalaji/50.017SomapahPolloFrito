@@ -187,6 +187,16 @@ function init () {
 
 scene.background = TEXTURES.tex_sky
 
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
+scene.add(ambientLight)
+// Showcase multiple lights
+const pointLight1 = new THREE.PointLight(0xffffff, 0.5)
+pointLight1.position.set(0, 50, 0)
+scene.add(pointLight1)
+const pointLight2 = new THREE.PointLight(0xffffff, 0.5)
+pointLight2.position.set(100, 50, 100)
+scene.add(pointLight2)
+
 let maxh = 0
 function makeChunk (chunk, x0, z0) {
   x0 += 6969
@@ -265,7 +275,7 @@ function animate () {
         )
         geometry.rotateX(-Math.PI / 2)
 
-        const chunk = new THREE.Mesh(geometry, MATERIALS.material)
+        const chunk = new THREE.Mesh(geometry, MATERIALS.phong_material)
         scene.add(chunk)
 
         chunk.position.x = chunkXX * CHUNK_SIZE

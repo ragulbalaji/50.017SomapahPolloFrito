@@ -1,4 +1,6 @@
+const texture_loader = new THREE.TextureLoader()
+
 const TEXTURES = {
-  tex_grass: new THREE.TextureLoader().load('assets/tex/grass.png'),
-  tex_sky: new THREE.TextureLoader().load('assets/tex/sky.jpg')
+  tex_grass: texture_loader.load('assets/tex/grass.png'),
+  tex_sky: texture_loader.load('assets/tex/sky.jpg')
 }
