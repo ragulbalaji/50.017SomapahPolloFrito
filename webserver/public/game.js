@@ -258,9 +258,9 @@ function animate () {
       HUDposition.innerText = `pos=(${playerPosition.x.toFixed(
         1
       )},${playerPosition.y.toFixed(1)},${playerPosition.z.toFixed(1)})`
-      
-      // update score board on FE 
-      currScoreHTML.innerText = currScore;
+
+      // update score board on FE
+      currScoreHTML.innerText = currScore
     }
   }
 
