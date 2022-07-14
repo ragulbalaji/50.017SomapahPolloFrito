@@ -360,6 +360,7 @@ function makeChunk(x0, y0) {
 // Animate
 
 let xxx = 0;
+makeChunk(0, xxx);
 
 function animate() {
     const deltaTime = Math.min(0.05, clock.getDelta()) / STEPS_PER_FRAME;
@@ -369,7 +370,7 @@ function animate() {
         updatePlayer(deltaTime);
     }
 
-    makeChunk(0, xxx);
+    
     // xxx += 1;
 
     renderer.render(scene, camera);
