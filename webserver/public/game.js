@@ -200,9 +200,12 @@ function init () {
 /// ////////////////////////////////////////////////////////////////////////////
 // Geometry
 
+const tex_grass = new THREE.TextureLoader().load('assets/tex/grass.png')
+const tex_sky = new THREE.TextureLoader().load('assets/tex/sky.jpg')
+scene.background = tex_sky
+
 const material = new THREE.ShaderMaterial({
-  vertexShader: `
-  varying vec3 vPosition;
+  vertexShader: `varying vec3 vPosition;
   varying vec2 vUV;
   varying float sea;
   void main() {
@@ -215,39 +218,27 @@ const material = new THREE.ShaderMaterial({
     // }
     
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-  `,
-  fragmentShader: `
-  varying vec3 vPosition;
+  }`,
+  fragmentShader: `varying vec3 vPosition;
   varying vec2 vUV;
   varying float sea;
-  float remap( float minval, float maxval, float curval )
-  {
-    return ( curval - minval ) / ( maxval - minval );
-  }
+  uniform sampler2D uTexture;
 
   void main() {
-    // float depth = vPosition.y / 16.0 + 0.1;
-    // vec3 green = vec3(0.0, 0.0, 1.0);
-    // vec3 blue = vec3(0.0, 1.0, 0.0);
-    // vec3 white = vec3(1.0, 1.0, 1.0);
-
-    // depth = clamp(depth, 0.0, 1.0);
-    // if (depth < 0.5) {
-    //   vec3 mixedColour = mix(green, blue, remap(0.0, 0.5, depth));
-    //   gl_FragColor = vec4(mixedColour, 1.0);
-    // } else {
-    //   vec3 mixedColour = mix(blue, white, remap(0.5, 1.0, depth));
-    //   gl_FragColor = vec4(mixedColour, 1.0);
-    // }
     if (vUV.x > 0.8 && vUV.y > 0.8) {
       gl_FragColor = vec4(0.1, 0.2, 0.7 - vPosition.y, 1.0);
     } else {
-      gl_FragColor = vec4(vUV.x, vUV.y, 0.0, 1.0);
+      vec3 color = texture2D(uTexture, vUV).rgb;
+      gl_FragColor = vec4(color, 1.0);
+      // gl_FragColor = vec4(vUV.x, vUV.y, 0.0, 1.0);
     }
     
+  }`,
+  uniforms: {
+    uTexture: {
+      value: tex_grass
+    }
   }
-  `
 })
 
 // const material2 = new THREE.MeshNormalMaterial({ flatShading: true })
