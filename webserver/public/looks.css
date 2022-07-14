@@ -1,3 +1,7 @@
+* {
+  font-family: "SF Mono", monospace;
+}
+
 body {
     margin: 0;
     background-color: #000;
@@ -27,4 +31,14 @@ body {
     text-align: center;
     font-size: 14px;
     cursor: pointer;
+}
+
+#headupdisplay {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.363);
+  font-size: 24px;
+  z-index: 99;
 }

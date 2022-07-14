@@ -23,6 +23,7 @@ let pointerLocked = false
 // references
 const blocker = document.getElementById('blocker')
 const instructions = document.getElementById('instructions')
+const HUDposition = document.getElementById('HUDposition')
 
 /// ////////////////////////////////////////////////////////////////////////////
 // Set up renderer, scene and camera
@@ -285,6 +286,7 @@ function animate () {
     for (let i = 0; i < STEPS_PER_FRAME; i++) {
       controls(deltaTime)
       updatePlayer(deltaTime)
+      HUDposition.innerText = `pos=(${playerPosition.x.toFixed(1)},${playerPosition.y.toFixed(1)},${playerPosition.z.toFixed(1)})`
     }
   }
 
