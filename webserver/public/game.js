@@ -36,9 +36,9 @@ const camera = new THREE.PerspectiveCamera(
   1000
 )
 camera.rotation.order = 'YXZ'
-camera.position.y = -1
-camera.position.z = -1
-camera.lookAt(0, 0, 0)
+camera.position.y = 3
+camera.position.z = 0
+camera.lookAt(5, 0, 10)
 
 const stats = new Stats()
 
@@ -180,7 +180,8 @@ function init () {
   instructions.addEventListener('click', function () {
     document.body.requestPointerLock =
             document.body.requestPointerLock ||
-            document.body.mozRequestPointerLock
+            document.body.mozRequestPointerLock ||
+            document.body.webkitRequestPointerLock
     document.body.requestPointerLock()
   })
 
@@ -311,11 +312,14 @@ function makeChunk (chunk, x0, y0) {
 
 const loadedChunks = new Map()
 function animate () {
-  const deltaTime = Math.min(0.05, clock.getDelta()) / STEPS_PER_FRAME
+  // Prevent user from moving when the pointer is not locked
+  if (pointerLocked) {
+    const deltaTime = Math.min(0.05, clock.getDelta()) / STEPS_PER_FRAME
 
-  for (let i = 0; i < STEPS_PER_FRAME; i++) {
-    controls(deltaTime)
-    updatePlayer(deltaTime)
+    for (let i = 0; i < STEPS_PER_FRAME; i++) {
+      controls(deltaTime)
+      updatePlayer(deltaTime)
+    }
   }
 
   const chunkXX = Math.floor(camera.position.x / CHUNK_SIZE + 0.5)
