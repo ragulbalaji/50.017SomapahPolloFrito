@@ -70,17 +70,18 @@ function getSideVector () {
 }
 
 function controls (deltaTime) {
-  let speedDelta = deltaTime * (playerOnFloor ? PLAYER_SPEED_GROUND : PLAYER_SPEED_AIR)
+  let speedDelta =
+    deltaTime * (playerOnFloor ? PLAYER_SPEED_GROUND : PLAYER_SPEED_AIR)
   // if shift is pressed then move at triple speed
   if (keyStates.ShiftLeft || keyStates.ShiftRight) speedDelta *= 3
   // move forward
-  if (keyStates.KeyW || keyStates.ArrowUp) playerVelocity.add(getForwardVector().multiplyScalar(speedDelta))
+  if (keyStates.KeyW || keyStates.ArrowUp) { playerVelocity.add(getForwardVector().multiplyScalar(speedDelta)) }
   // move backward
-  if (keyStates.KeyS || keyStates.ArrowDown) playerVelocity.add(getForwardVector().multiplyScalar(-speedDelta))
+  if (keyStates.KeyS || keyStates.ArrowDown) { playerVelocity.add(getForwardVector().multiplyScalar(-speedDelta)) }
   // move left
-  if (keyStates.KeyA || keyStates.ArrowLeft) playerVelocity.add(getSideVector().multiplyScalar(-speedDelta))
+  if (keyStates.KeyA || keyStates.ArrowLeft) { playerVelocity.add(getSideVector().multiplyScalar(-speedDelta)) }
   // move right
-  if (keyStates.KeyD || keyStates.ArrowRight) playerVelocity.add(getSideVector().multiplyScalar(speedDelta))
+  if (keyStates.KeyD || keyStates.ArrowRight) { playerVelocity.add(getSideVector().multiplyScalar(speedDelta)) }
   // fly up
   if (keyStates.KeyQ || keyStates.KeyZ) playerVelocity.y += speedDelta
   // fly down
@@ -197,8 +198,7 @@ function makeChunk (chunk, x0, z0) {
   for (let y = 0; y < CHUNK_SIZE; y++) {
     for (let x = 0; x < CHUNK_SIZE; x++) {
       const j = 2 * (y * CHUNK_SIZE + x)
-      const temp =
-                (noise.simplex2((x0 + x) / 512, (z0 + y) / 512) + 1) / 2
+      const temp = (noise.simplex2((x0 + x) / 512, (z0 + y) / 512) + 1) / 2
       let rain = (noise.simplex2((x0 + x) / 256, (z0 + y) / 256) + 1) / 2
       rain = Math.min(rain, 0.99 - temp)
       uv[j] = temp
@@ -206,15 +206,12 @@ function makeChunk (chunk, x0, z0) {
 
       const i = 3 * (y * CHUNK_SIZE + x)
       const h =
-                noise.simplex2((x0 + x) / 4, (z0 + y) / 4) * (rain + 0.3) +
-                noise.simplex2((x0 + x) / 128, (z0 + y) / 128) * 4 +
-                Math.max(
-                  0,
-                  noise.simplex2((x0 + x) / 768, (z0 + y) / 768) * 32
-                )
+        noise.simplex2((x0 + x) / 4, (z0 + y) / 4) * (rain + 0.3) +
+        noise.simplex2((x0 + x) / 128, (z0 + y) / 128) * 4 +
+        Math.max(0, noise.simplex2((x0 + x) / 768, (z0 + y) / 768) * 32)
       const r =
-                Math.abs(noise.simplex2((x0 + x) / 96, (z0 + y) / 96)) <
-                Math.min(0.2, Math.abs((3 - h) / 8))
+        Math.abs(noise.simplex2((x0 + x) / 96, (z0 + y) / 96)) <
+        Math.min(0.2, Math.abs((3 - h) / 8))
       vertices[i + 1] = Math.max(0, h)
       if (h < 0) {
         uv[j] = 1
@@ -245,7 +242,9 @@ function animate () {
     for (let i = 0; i < STEPS_PER_FRAME; i++) {
       controls(deltaTime)
       updatePlayer(deltaTime)
-      HUDposition.innerText = `pos=(${playerPosition.x.toFixed(1)},${playerPosition.y.toFixed(1)},${playerPosition.z.toFixed(1)})`
+      HUDposition.innerText = `pos=(${playerPosition.x.toFixed(
+        1
+      )},${playerPosition.y.toFixed(1)},${playerPosition.z.toFixed(1)})`
     }
   }
 
@@ -271,7 +270,11 @@ function animate () {
 
         chunk.position.x = chunkXX * CHUNK_SIZE
         chunk.position.z = chunkZZ * CHUNK_SIZE
-        makeChunk(chunk, (chunkXX - 0.5) * CHUNK_SIZE, (chunkZZ - 0.5) * CHUNK_SIZE)
+        makeChunk(
+          chunk,
+          (chunkXX - 0.5) * CHUNK_SIZE,
+          (chunkZZ - 0.5) * CHUNK_SIZE
+        )
 
         loadedChunks.set(chunkName, chunk)
       }
