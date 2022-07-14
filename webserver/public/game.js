@@ -28,7 +28,9 @@ const renderer = new THREE.WebGLRenderer({
   precision: 'lowp'
 })
 const scene = new THREE.Scene()
-scene.background = new THREE.Color(0x79a6ff)
+const SKY_COLOR = 0x79a6ff
+scene.background = new THREE.Color(SKY_COLOR)
+// scene.fog = new THREE.Fog(SKY_COLOR, 0, 100)
 
 const camera = new THREE.PerspectiveCamera(
   90,
@@ -258,7 +260,7 @@ function makeChunk (chunk, x0, z0) {
       const temp =
                 (noise.simplex2((x0 + x) / 512, (z0 + y) / 512) + 1) / 2
       let rain = (noise.simplex2((x0 + x) / 256, (z0 + y) / 256) + 1) / 2
-      rain = Math.min(rain, 1 - temp)
+      rain = Math.min(rain, 0.99 - temp)
       uv[j] = temp
       uv[j + 1] = rain
 
@@ -268,7 +270,7 @@ function makeChunk (chunk, x0, z0) {
                 noise.simplex2((x0 + x) / 128, (z0 + y) / 128) * 4 +
                 Math.max(
                   0,
-                  noise.simplex2((x0 + x) / 1024, (z0 + y) / 1024) * 32
+                  noise.simplex2((x0 + x) / 768, (z0 + y) / 768) * 32
                 )
       const r =
                 Math.abs(noise.simplex2((x0 + x) / 96, (z0 + y) / 96)) <
