@@ -24,7 +24,7 @@ let pointerLocked = false
 const blocker = document.getElementById('blocker')
 const instructions = document.getElementById('instructions')
 const HUDposition = document.getElementById('HUDposition')
-let currScore = 0
+const currScore = 0
 const currScoreHTML = document.getElementById('currScoreHTML')
 /// ////////////////////////////////////////////////////////////////////////////
 // Set up renderer, scene and camera
@@ -36,7 +36,9 @@ const renderer = new THREE.WebGLRenderer({
 const scene = new THREE.Scene()
 const SKY_COLOR = 0x79a6ff
 scene.background = new THREE.Color(SKY_COLOR)
-// scene.fog = new THREE.Fog(SKY_COLOR, 0, 100)
+// scene.fog = new THREE.Fog(SKY_COLOR, 0, 400)
+scene.fog = new THREE.FogExp2(SKY_COLOR, 0.004)
+// scene.background = TEXTURES.tex_sky
 
 const camera = new THREE.PerspectiveCamera(
   90,
@@ -186,8 +188,6 @@ function init () {
 /// ////////////////////////////////////////////////////////////////////////////
 // Geometry
 
-scene.background = TEXTURES.tex_sky
-
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
 scene.add(ambientLight)
 // Showcase multiple lights
@@ -255,12 +255,12 @@ function animate () {
       updatePlayer(deltaTime)
 
       // update position on FE
-      HUDposition.innerText = `pos=(${playerPosition.x.toFixed(
-        1
-      )},${playerPosition.y.toFixed(1)},${playerPosition.z.toFixed(1)})`
+      // HUDposition.innerText = `pos=(${playerPosition.x.toFixed(
+      //   1
+      // )},${playerPosition.y.toFixed(1)},${playerPosition.z.toFixed(1)})`
 
-      // update score board on FE
-      currScoreHTML.innerText = currScore
+      // // update score board on FE
+      // currScoreHTML.innerText = currScore
     }
   }
 

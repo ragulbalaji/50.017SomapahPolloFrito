@@ -42,14 +42,3 @@ body {
   font-size: 24px;
   z-index: 99;
 }
-
-#topCenter {  
-  position: relative;
-  margin:0 auto;
-  clear: left;
-  color: white;
-  background-color: rgba(0, 0, 0, 0.363);
-  font-size: 24px;
-  height: auto;
-  text-align: center;
-}
