@@ -2,9 +2,9 @@
 // Constants
 
 const WORLD_SEED = Math.round(Math.random() * 4206969)
-const CHUNK_SIZE = 128
+const CHUNK_SIZE = 96
 const CHUNK_SCALE = 1
-const STEPS_PER_FRAME = 5
+const STEPS_PER_FRAME = 1
 const GRAVITY = 30
 const POINTER_SPEED = 2
 const _PI_2 = Math.PI / 2
@@ -262,12 +262,15 @@ function animate () {
       // // update score board on FE
       // currScoreHTML.innerText = currScore
     }
+
+    HUDposition.innerText = loadedChunks.size
   }
 
   const chunkX = Math.floor(camera.position.x / CHUNK_SIZE + 0.5)
   const chunkZ = Math.floor(camera.position.z / CHUNK_SIZE + 0.5)
-  for (let xoffset = -2; xoffset <= 2; xoffset++) {
-    for (let zoffset = -2; zoffset <= 2; zoffset++) {
+  let gencount = 0
+  for (let xoffset = -2; xoffset <= 2 && gencount < 1; xoffset++) {
+    for (let zoffset = -2; zoffset <= 2 && gencount < 1; zoffset++) {
       const chunkXX = chunkX + xoffset
       const chunkZZ = chunkZ + zoffset
       const chunkName = `${chunkXX}$$${chunkZZ}`
@@ -293,6 +296,19 @@ function animate () {
         )
 
         loadedChunks.set(chunkName, chunk)
+        gencount++
+      }
+    }
+  }
+
+  // Unload chunks
+  if (loadedChunks.size > 64) {
+    for (const [chunkName, chunk] of loadedChunks) {
+      const dist = Math.pow(chunk.position.x - playerPosition.x, 2) + Math.pow(chunk.position.z - playerPosition.z, 2)
+      if (dist > 160000) {
+        chunk.geometry.dispose()
+        scene.remove(chunk)
+        loadedChunks.delete(chunkName)
       }
     }
   }
