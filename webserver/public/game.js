@@ -8,8 +8,8 @@ const STEPS_PER_FRAME = 1
 const GRAVITY = 30
 const POINTER_SPEED = 2
 const _PI_2 = Math.PI / 2
-const PLAYER_SPEED_GROUND = 400
-const PLAYER_SPEED_AIR = 200
+const PLAYER_SPEED_GROUND = 1200
+const PLAYER_SPEED_AIR = 600
 
 const clock = new THREE.Clock()
 const keyStates = {} // to store key presses
@@ -76,7 +76,7 @@ function controls (deltaTime) {
   let speedDelta =
     deltaTime * (playerOnFloor ? PLAYER_SPEED_GROUND : PLAYER_SPEED_AIR)
   // if shift is pressed then move at triple speed
-  if (keyStates.ShiftLeft || keyStates.ShiftRight) speedDelta *= 3
+  if (keyStates.ShiftLeft || keyStates.ShiftRight) speedDelta /= 3
   // move forward
   if (keyStates.KeyW || keyStates.ArrowUp) { playerVelocity.add(getForwardVector().multiplyScalar(speedDelta)) }
   // move backward
