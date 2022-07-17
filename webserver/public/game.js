@@ -1,7 +1,7 @@
 /// ////////////////////////////////////////////////////////////////////////////
 // Constants
 
-const WORLD_SEED = Math.round(Math.random() * 4206969)
+const WORLD_SEED = 0// Math.round(Math.random() * 4206969)
 const CHUNK_SIZE = 96
 const CHUNK_SCALE = 1
 const STEPS_PER_FRAME = 1
@@ -16,7 +16,7 @@ const keyStates = {} // to store key presses
 const playerOnFloor = true
 const playerVelocity = new THREE.Vector3()
 const playerDirection = new THREE.Vector3()
-const playerPosition = new THREE.Vector3(0, 32, 0)
+const playerPosition = new THREE.Vector3(0, 64, 0)
 const eulerAngle = new THREE.Euler(0, 0, 0, 'YXZ')
 let pointerLocked = false
 
@@ -216,14 +216,23 @@ function makeChunk (chunk, x0, z0) {
       uv[j + 1] = rain
 
       const i = 3 * (y * CHUNK_SIZE + x)
-      const h =
+      let h =
         noise.simplex2((x0 + x) / 4, (z0 + y) / 4) * (rain + 0.3) +
         noise.simplex2((x0 + x) / 128, (z0 + y) / 128) * 4 +
-        Math.max(0, noise.simplex2((x0 + x) / 768, (z0 + y) / 768) * 32)
+        Math.min(32, noise.simplex2((x0 + x) / 768, (z0 + y) / 768) * 32 + 16)
+
+      const m = Math.abs(noise.perlin2((x0 + x) / 512, (z0 + y) / 512))
+      const mt = Math.abs(noise.simplex2((x0 + x) / 512, (z0 + y) / 512) * 0.2)
+      if (m < mt && h > 24) {
+        h *= (1 + (mt - m) * h / 5)
+      }
+
+      vertices[i + 1] = Math.max(0, h)
+
       const r =
         Math.abs(noise.simplex2((x0 + x) / 96, (z0 + y) / 96)) <
         Math.min(0.2, Math.abs((3 - h) / 8))
-      vertices[i + 1] = Math.max(0, h)
+
       if (h < 0) {
         uv[j] = 1
         uv[j + 1] = 1
