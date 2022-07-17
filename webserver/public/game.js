@@ -188,14 +188,16 @@ function init () {
 /// ////////////////////////////////////////////////////////////////////////////
 // Geometry
 
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
+const ambientLight = new THREE.AmbientLight(0x404040)
 scene.add(ambientLight)
 // Showcase multiple lights
-const pointLight1 = new THREE.PointLight(0xffffff, 0.5)
+const pointLight1 = new THREE.PointLight(0xffffff, 1, 300)
 pointLight1.position.set(0, 50, 0)
+pointLight1.castShadow = true
 scene.add(pointLight1)
-const pointLight2 = new THREE.PointLight(0xffffff, 0.5)
+const pointLight2 = new THREE.PointLight(0xffffff, 1, 300)
 pointLight2.position.set(100, 50, 100)
+pointLight2.castShadow = true
 scene.add(pointLight2)
 
 let maxh = 0
