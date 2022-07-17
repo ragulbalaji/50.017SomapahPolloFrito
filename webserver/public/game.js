@@ -1,7 +1,7 @@
 /// ////////////////////////////////////////////////////////////////////////////
 // Constants
 
-const WORLD_SEED = 0// Math.round(Math.random() * 4206969)
+const WORLD_SEED = Math.round(Math.random() * 4206969)
 const CHUNK_SIZE = 96
 const CHUNK_SCALE = 1
 const STEPS_PER_FRAME = 1
