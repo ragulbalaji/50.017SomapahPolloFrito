@@ -30,7 +30,8 @@ const material = new THREE.ShaderMaterial({
 
 const phong_material = new THREE.MeshPhongMaterial({
   specular: 0xffffff,
-  shininess: 50,
+  shininess: 5,
+  flatShading: true,
   map: TEXTURES.tex_grass
 })
 
