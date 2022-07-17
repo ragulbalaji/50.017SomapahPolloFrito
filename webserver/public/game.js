@@ -77,7 +77,7 @@ function getSideVector () {
 function controls (deltaTime) {
   let speedDelta =
     deltaTime * (playerOnFloor ? PLAYER_SPEED_GROUND : PLAYER_SPEED_AIR)
-  // if shift is pressed then move at triple speed
+  // if shift is pressed then move at one-third speed
   if (keyStates.ShiftLeft || keyStates.ShiftRight) speedDelta /= 3
   // move forward
   if (keyStates.KeyW || keyStates.ArrowUp) { playerVelocity.add(getForwardVector().multiplyScalar(speedDelta)) }
