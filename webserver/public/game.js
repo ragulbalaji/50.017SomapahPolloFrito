@@ -33,6 +33,8 @@ const renderer = new THREE.WebGLRenderer({
   antialias: true,
   precision: 'lowp'
 })
+renderer.shadowMap.enabled = true
+renderer.shadowMap.type = THREE.PCFSoftShadowMap
 const scene = new THREE.Scene()
 const SKY_COLOR = 0x79a6ff
 scene.background = new THREE.Color(SKY_COLOR)
@@ -188,17 +190,12 @@ function init () {
 /// ////////////////////////////////////////////////////////////////////////////
 // Geometry
 
-const ambientLight = new THREE.AmbientLight(0x404040)
+const ambientLight = new THREE.AmbientLight(0x404040, 0.5)
 scene.add(ambientLight)
-// Showcase multiple lights
-const pointLight1 = new THREE.PointLight(0xffffff, 1, 300)
-pointLight1.position.set(0, 50, 0)
-pointLight1.castShadow = true
-scene.add(pointLight1)
-const pointLight2 = new THREE.PointLight(0xffffff, 1, 300)
-pointLight2.position.set(100, 50, 100)
-pointLight2.castShadow = true
-scene.add(pointLight2)
+const directionalLight = new THREE.DirectionalLight(0xfdfbd3, 0.8)
+directionalLight.castShadow = true
+directionalLight.position.set(100, 100, 0)
+scene.add(directionalLight)
 
 let maxh = 0
 function makeChunk (chunk, x0, z0) {
@@ -296,6 +293,7 @@ function animate () {
         geometry.rotateX(-Math.PI / 2)
 
         const chunk = new THREE.Mesh(geometry, MATERIALS.phong_material)
+        chunk.receiveShadow = true
         scene.add(chunk)
 
         chunk.position.x = chunkXX * CHUNK_SIZE
