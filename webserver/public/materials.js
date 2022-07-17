@@ -30,9 +30,9 @@ const material = new THREE.ShaderMaterial({
 
 const phong_material = new THREE.MeshPhongMaterial({
   specular: 0xffffff,
-  shininess: 5,
+  shininess: 0.1,
   flatShading: true,
-  map: TEXTURES.tex_grass
+  map: TEXTURES.tex_HandM
 })
 
 phong_material.onBeforeCompile = function (materialInfo) {
@@ -44,6 +44,10 @@ phong_material.onBeforeCompile = function (materialInfo) {
     varying vec3 vViewPosition;
     varying vec3 vPosition;
     `
+  ).replace(
+    '}',
+    `vPosition = position;
+     }`
   )
   materialInfo.fragmentShader = materialInfo.fragmentShader.replace(
     'uniform float opacity;',
@@ -58,7 +62,7 @@ phong_material.onBeforeCompile = function (materialInfo) {
       vec4 sampledDiffuseColor = vec4(0.1, 0.2, 0.7 - vPosition.y, 1.0);
       diffuseColor *= sampledDiffuseColor;
     } else {
-      vec4 sampledDiffuseColor = texture2D( map, vUv );
+      vec4 sampledDiffuseColor = texture2D( map, vec2(vUv.x, vPosition.y / 64.0));
       diffuseColor *= sampledDiffuseColor;
     }
     `
