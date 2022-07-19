@@ -34,6 +34,11 @@ body {
     cursor: pointer;
 }
 
+#title {
+    font-size: 40px;
+    line-height: 60px;
+}
+
 #headupdisplay {
   position: absolute;
   right: 10px;
