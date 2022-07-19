@@ -28,7 +28,7 @@ const seedElement = document.getElementById('seed')
 const cameraPositionElement = document.getElementById('cameraPosition')
 const currScore = 0
 const currScoreHTML = document.getElementById('currScoreHTML')
-seedElement.innerText = WORLD_SEED
+seedElement.innerText = `seed=${WORLD_SEED}`
 /// ////////////////////////////////////////////////////////////////////////////
 // Set up renderer, scene and camera
 
@@ -272,7 +272,7 @@ function animate () {
       // currScoreHTML.innerText = currScore
     }
 
-    numOfLoadedChunksElement.innerText = loadedChunks.size
+    numOfLoadedChunksElement.innerText = `chunks_loaded=${loadedChunks.size}`
   }
 
   const chunkX = Math.floor(camera.position.x / CHUNK_SIZE + 0.5)
