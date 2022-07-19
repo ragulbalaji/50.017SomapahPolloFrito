@@ -23,7 +23,7 @@ let pointerLocked = false
 // references
 const blocker = document.getElementById('blocker')
 const instructions = document.getElementById('instructions')
-const HUDposition = document.getElementById('HUDposition')
+const numOfLoadedChunksElement = document.getElementById('numOfLoadedChunks')
 const seedElement = document.getElementById('seed')
 const cameraPositionElement = document.getElementById('cameraPosition')
 const currScore = 0
@@ -272,7 +272,7 @@ function animate () {
       // currScoreHTML.innerText = currScore
     }
 
-    HUDposition.innerText = loadedChunks.size
+    numOfLoadedChunksElement.innerText = loadedChunks.size
   }
 
   const chunkX = Math.floor(camera.position.x / CHUNK_SIZE + 0.5)
