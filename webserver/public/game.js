@@ -4,6 +4,7 @@
 const WORLD_SEED = Math.round(Math.random() * 4206969)
 const CHUNK_SIZE = 96
 const CHUNK_SCALE = 1
+const MAX_NUM_CHUNKS = 100
 const STEPS_PER_FRAME = 1
 const GRAVITY = 30
 const POINTER_SPEED = 2
@@ -33,7 +34,7 @@ const cameraPositionElement = document.getElementById('cameraPosition')
 const modeLabel = document.getElementById('mode')
 const currScore = 0
 const currScoreHTML = document.getElementById('currScoreHTML')
-seedElement.innerText = `seed=${WORLD_SEED}`
+
 /// ////////////////////////////////////////////////////////////////////////////
 // Set up renderer, scene and camera
 
@@ -172,7 +173,6 @@ function toggleCreativeMode () {
     playerPosition.y = PLAYER_INIT_HEIGHT
     modeLabel.innerText = 'mode=CREATIVE'
   } else {
-    console.log('normal mode')
     CREATIVE_MODE = false
     modeLabel.innerText = 'mode=SURVIVAL'
   }
@@ -201,6 +201,7 @@ init()
 
 function init () {
   stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
+  seedElement.innerText = `seed=${WORLD_SEED}`
   document.body.appendChild(stats.dom)
 
   renderer.setPixelRatio(window.devicePixelRatio)
@@ -350,14 +351,19 @@ function animate () {
   }
 
   // Unload chunks
-  if (loadedChunks.size > 64) {
-    for (const [chunkName, chunk] of loadedChunks) {
-      const dist = Math.pow(chunk.position.x - playerPosition.x, 2) + Math.pow(chunk.position.z - playerPosition.z, 2)
-      if (dist > 160000) {
-        chunk.geometry.dispose()
-        scene.remove(chunk)
-        loadedChunks.delete(chunkName)
-      }
+  if (loadedChunks.size > MAX_NUM_CHUNKS) {
+    const chunkNames = Array.from(loadedChunks.keys())
+    chunkNames.sort((a, b) => {
+      const aDist = loadedChunks.get(a).position.distanceTo(playerPosition)
+      const bDist = loadedChunks.get(b).position.distanceTo(playerPosition)
+      return bDist - aDist
+    })
+    for (let i = 0; i < chunkNames.length - MAX_NUM_CHUNKS; i++) {
+      const chunkName = chunkNames[i]
+      const chunk = loadedChunks.get(chunkName)
+      chunk.geometry.dispose()
+      scene.remove(chunk)
+      loadedChunks.delete(chunkName)
     }
   }
 
