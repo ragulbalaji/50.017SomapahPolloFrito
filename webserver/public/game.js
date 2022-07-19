@@ -2,15 +2,18 @@
 // Constants
 
 const WORLD_SEED = Math.round(Math.random() * 4206969)
-const CHUNK_SIZE = 64
+const CHUNK_SIZE = 98
 const CHUNK_SCALE = 1
 const STEPS_PER_FRAME = 1
 const GRAVITY = 30
 const POINTER_SPEED = 2
 const _PI_2 = Math.PI / 2
+
 const PLAYER_SPEED_GROUND = 25
 const PLAYER_SPEED_AIR = 8
-const PLAYER_INIT_HEIGHT = 32
+const PLAYER_INIT_HEIGHT = 64
+let CREATIVE_MODE = false
+const CREATIVE_SPEED_FACTOR = 20
 
 const clock = new THREE.Clock()
 let playerOnFloor = false
@@ -30,8 +33,7 @@ const HUDposition = document.getElementById('HUDposition')
 const currScore = 0
 const currScoreHTML = document.getElementById('currScoreHTML')
 
-const worldOctree = new THREE.Octree()
-const playerCollider = new THREE.Capsule( new THREE.Vector3( 0, PLAYER_INIT_HEIGHT, 0 ), new THREE.Vector3( 0, PLAYER_INIT_HEIGHT, 0 ), 0.35 );
+const rayCaster = new THREE.Raycaster()
 
 /// ////////////////////////////////////////////////////////////////////////////
 // Set up renderer, scene and camera
@@ -84,6 +86,8 @@ function getSideVector () {
 function controls (deltaTime) {
   let speedDelta =
     deltaTime * (playerOnFloor ? PLAYER_SPEED_GROUND : PLAYER_SPEED_AIR)
+
+  speedDelta *= CREATIVE_MODE ? CREATIVE_SPEED_FACTOR : 1
   // if shift is pressed then move at one-third speed
   if (keyStates.ShiftLeft || keyStates.ShiftRight) speedDelta /= 3
   // move forward
@@ -99,28 +103,37 @@ function controls (deltaTime) {
   // fly down
   if (keyStates.KeyE || keyStates.KeyX) playerVelocity.y -= speedDelta
   // jump if player on floor
-  if (playerOnFloor && keyStates.Space) playerVelocity.y = 15
+  if (playerOnFloor && keyStates.Space) playerVelocity.y = 30
+}
+
+function toggleCreativeMode () {
+  if (!CREATIVE_MODE) {
+    console.log('creative mode')
+    CREATIVE_MODE = true
+    playerOnFloor = true
+    playerVelocity.y = 0
+    playerPosition.y = PLAYER_INIT_HEIGHT
+    // document.getElementById('creativeMode').style.display = 'block'
+  } else {
+    console.log('normal mode')
+    CREATIVE_MODE = false
+    // document.getElementById('creativeMode').style.display = 'none'
+  }
 }
 
 function playerCollisions () {
-  // const landHeight = getLandHeight()
-  // playerOnFloor = false
-  // playerOnFloor = landHeight >= camera.position.y
-  // const normal = new THREE.Vector3(0, 1, 0)
-  // // const normal = new THREE.Vector3(0, camera.position.y - landHeight, 0)
-  // if (!playerOnFloor) {
-  //   playerVelocity.addScaledVector(normal, -normal.dot(playerVelocity))
-  // }
+  if (CREATIVE_MODE) return
 
-  const result = worldOctree.capsuleIntersect( playerCollider );
-  playerOnFloor = false;
-  if ( result ) {
-    // console.log("collision detected");
-    playerOnFloor = result.normal.y > 0;
-    if ( ! playerOnFloor ) {
-      playerVelocity.addScaledVector( result.normal, - result.normal.dot( playerVelocity ) );
+  rayCaster.set(playerPosition, new THREE.Vector3(0, -1, 0))
+  const intersects = rayCaster.intersectObjects(scene.children)
+  if (intersects.length > 0) {
+    if (intersects[0].distance < 3) {
+      const normal = intersects[0].face.normal
+      playerOnFloor = true
+      playerVelocity.addScaledVector(normal, -normal.dot(playerVelocity))
+    } else {
+      playerOnFloor = false
     }
-    playerCollider.translate( result.normal.multiplyScalar( result.depth ) );
   }
 }
 
@@ -135,12 +148,11 @@ function updatePlayer (deltaTime) {
 
   playerVelocity.addScaledVector(playerVelocity, damping)
   const deltaPosition = playerVelocity.clone().multiplyScalar(deltaTime)
-  playerCollider.translate( deltaPosition );
 
   playerCollisions()
 
   playerPosition.add(deltaPosition)
-  camera.position.copy(playerCollider.end)
+  camera.position.copy(playerPosition)
 }
 
 function onPointerLockChange () {
@@ -258,6 +270,7 @@ function init () {
 
   document.addEventListener('keydown', (e) => {
     keyStates[e.code] = true
+    if (e.code === 'KeyC') toggleCreativeMode()
   })
   document.addEventListener('keyup', (e) => {
     keyStates[e.code] = false
@@ -357,10 +370,8 @@ function animate () {
   const chunkZ = Math.floor(camera.position.z / CHUNK_SIZE + 0.5)
   let genCount = 0
 
-  const currChunkNum = loadedChunks.size
-
-  for (let xoffset = -1; xoffset <= 1 && genCount < 1; xoffset++) {
-    for (let zoffset = -1; zoffset <= 1 && genCount < 1; zoffset++) {
+  for (let xoffset = -2; xoffset <= 2 && genCount < 1; xoffset++) {
+    for (let zoffset = -2; zoffset <= 2 && genCount < 1; zoffset++) {
       const chunkXX = chunkX + xoffset
       const chunkZZ = chunkZ + zoffset
       const chunkName = `${chunkXX}$$${chunkZZ}`
@@ -378,7 +389,7 @@ function animate () {
         const chunk = new THREE.Mesh(geometry, MATERIALS.phong_material)
         chunk.receiveShadow = true
         scene.add(chunk)
-  
+
         chunk.position.x = chunkXX * CHUNK_SIZE
         chunk.position.z = chunkZZ * CHUNK_SIZE
 
@@ -393,11 +404,6 @@ function animate () {
         // console.log(loadedChunks)
       }
     }
-  }
-
-  if (currChunkNum !== loadedChunks.size) {
-    console.log("New Chunks loaded:", loadedChunks.size - currChunkNum)
-    worldOctree.fromGraphNode(scene)
   }
 
   // Unload chunks
