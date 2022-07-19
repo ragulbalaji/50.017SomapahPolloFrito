@@ -8,17 +8,21 @@ const STEPS_PER_FRAME = 1
 const GRAVITY = 30
 const POINTER_SPEED = 2
 const _PI_2 = Math.PI / 2
-const PLAYER_SPEED_GROUND = 1200
-const PLAYER_SPEED_AIR = 600
+const PLAYER_INIT_HEIGHT = 64
+const PLAYER_SPEED_GROUND = 60
+const PLAYER_SPEED_AIR = 30
+const CREATIVE_SPEED_FACTOR = 20
 
 const clock = new THREE.Clock()
-const keyStates = {} // to store key presses
-const playerOnFloor = true
 const playerVelocity = new THREE.Vector3()
 const playerDirection = new THREE.Vector3()
-const playerPosition = new THREE.Vector3(0, 64, 0)
+const playerPosition = new THREE.Vector3(0, PLAYER_INIT_HEIGHT, 0)
 const eulerAngle = new THREE.Euler(0, 0, 0, 'YXZ')
 let pointerLocked = false
+let playerOnFloor = true
+let CREATIVE_MODE = false
+const keyStates = new Map() // to store key presses
+const loadedChunks = new Map() // to store currently loaded chunks
 
 // references
 const blocker = document.getElementById('blocker')
@@ -26,6 +30,7 @@ const instructions = document.getElementById('instructions')
 const numOfLoadedChunksElement = document.getElementById('numOfLoadedChunks')
 const seedElement = document.getElementById('seed')
 const cameraPositionElement = document.getElementById('cameraPosition')
+const modeLabel = document.getElementById('mode')
 const currScore = 0
 const currScoreHTML = document.getElementById('currScoreHTML')
 seedElement.innerText = `seed=${WORLD_SEED}`
@@ -58,6 +63,7 @@ camera.position.z = playerPosition.z
 camera.lookAt(16, 0, 0)
 
 const stats = new Stats()
+const rayCaster = new THREE.Raycaster()
 
 /// ////////////////////////////////////////////////////////////////////////////
 // Controls
@@ -80,6 +86,7 @@ function getSideVector () {
 function controls (deltaTime) {
   let speedDelta =
     deltaTime * (playerOnFloor ? PLAYER_SPEED_GROUND : PLAYER_SPEED_AIR)
+  speedDelta *= CREATIVE_MODE ? CREATIVE_SPEED_FACTOR : 1
   // if shift is pressed then move at one-third speed
   if (keyStates.ShiftLeft || keyStates.ShiftRight) speedDelta /= 3
   // move forward
@@ -95,7 +102,7 @@ function controls (deltaTime) {
   // fly down
   if (keyStates.KeyE || keyStates.KeyX) playerVelocity.y -= speedDelta
   // jump if player on floor
-  if (playerOnFloor && keyStates.Space) playerVelocity.y = 15
+  if (playerOnFloor && keyStates.Space) playerVelocity.y = 30
 }
 
 function updatePlayer (deltaTime) {
@@ -110,6 +117,7 @@ function updatePlayer (deltaTime) {
   playerVelocity.addScaledVector(playerVelocity, damping)
   const deltaPosition = playerVelocity.clone().multiplyScalar(deltaTime)
   playerPosition.add(deltaPosition)
+  playerCollisions()
   camera.position.copy(playerPosition)
 }
 
@@ -156,6 +164,36 @@ function onWindowResize () {
   renderer.setSize(window.innerWidth, window.innerHeight)
 }
 
+function toggleCreativeMode () {
+  if (!CREATIVE_MODE) {
+    CREATIVE_MODE = true
+    playerOnFloor = true
+    playerVelocity.y = 0
+    playerPosition.y = PLAYER_INIT_HEIGHT
+    modeLabel.innerText = 'mode=CREATIVE'
+  } else {
+    console.log('normal mode')
+    CREATIVE_MODE = false
+    modeLabel.innerText = 'mode=SURVIVAL'
+  }
+}
+
+function playerCollisions () {
+  if (CREATIVE_MODE) return
+
+  rayCaster.set(playerPosition, new THREE.Vector3(0, -1, 0))
+  const intersects = rayCaster.intersectObjects(scene.children)
+  if (intersects.length > 0) {
+    if (intersects[0].distance < 3) {
+      const normal = intersects[0].face.normal
+      playerOnFloor = true
+      playerVelocity.addScaledVector(normal, -normal.dot(playerVelocity))
+    } else {
+      playerOnFloor = false
+    }
+  }
+}
+
 /// ////////////////////////////////////////////////////////////////////////////
 // Initialize
 
@@ -184,6 +222,7 @@ function init () {
 
   document.addEventListener('keydown', (e) => {
     keyStates[e.code] = true
+    if (e.code === 'KeyC') toggleCreativeMode()
   })
   document.addEventListener('keyup', (e) => {
     keyStates[e.code] = false
@@ -255,7 +294,6 @@ function makeChunk (chunk, x0, z0) {
 /// ////////////////////////////////////////////////////////////////////////////
 // Animate
 
-const loadedChunks = new Map()
 function animate () {
   // Prevent user from moving when the pointer is not locked
   if (pointerLocked) {

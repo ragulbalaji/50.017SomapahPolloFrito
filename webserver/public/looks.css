@@ -29,7 +29,8 @@ body {
     align-items: center;
 
     text-align: center;
-    font-size: 14px;
+    font-size: 18px;
+    line-height: 30px;
     cursor: pointer;
 }
 
@@ -39,6 +40,7 @@ body {
   top: 0px;
   color: white;
   background-color: rgba(0, 0, 0, 0.363);
-  font-size: 24px;
+  font-size: 12px;
+  line-height: 10px;
   z-index: 99;
 }
