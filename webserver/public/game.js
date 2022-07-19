@@ -2,23 +2,26 @@
 // Constants
 
 const WORLD_SEED = Math.round(Math.random() * 4206969)
-const CHUNK_SIZE = 96
+const CHUNK_SIZE = 64
 const CHUNK_SCALE = 1
 const STEPS_PER_FRAME = 1
 const GRAVITY = 30
 const POINTER_SPEED = 2
 const _PI_2 = Math.PI / 2
-const PLAYER_SPEED_GROUND = 1200
-const PLAYER_SPEED_AIR = 600
+const PLAYER_SPEED_GROUND = 25
+const PLAYER_SPEED_AIR = 8
+const PLAYER_INIT_HEIGHT = 32
 
 const clock = new THREE.Clock()
-const keyStates = {} // to store key presses
-const playerOnFloor = true
+let playerOnFloor = false
 const playerVelocity = new THREE.Vector3()
 const playerDirection = new THREE.Vector3()
-const playerPosition = new THREE.Vector3(0, 64, 0)
+const playerPosition = new THREE.Vector3(0, PLAYER_INIT_HEIGHT, 0)
 const eulerAngle = new THREE.Euler(0, 0, 0, 'YXZ')
 let pointerLocked = false
+
+const keyStates = new Map() // to store key presses
+const loadedChunks = new Map() // to store currently loaded chunks
 
 // references
 const blocker = document.getElementById('blocker')
@@ -26,6 +29,10 @@ const instructions = document.getElementById('instructions')
 const HUDposition = document.getElementById('HUDposition')
 const currScore = 0
 const currScoreHTML = document.getElementById('currScoreHTML')
+
+const worldOctree = new THREE.Octree()
+const playerCollider = new THREE.Capsule( new THREE.Vector3( 0, PLAYER_INIT_HEIGHT, 0 ), new THREE.Vector3( 0, PLAYER_INIT_HEIGHT, 0 ), 0.35 );
+
 /// ////////////////////////////////////////////////////////////////////////////
 // Set up renderer, scene and camera
 
@@ -95,6 +102,28 @@ function controls (deltaTime) {
   if (playerOnFloor && keyStates.Space) playerVelocity.y = 15
 }
 
+function playerCollisions () {
+  // const landHeight = getLandHeight()
+  // playerOnFloor = false
+  // playerOnFloor = landHeight >= camera.position.y
+  // const normal = new THREE.Vector3(0, 1, 0)
+  // // const normal = new THREE.Vector3(0, camera.position.y - landHeight, 0)
+  // if (!playerOnFloor) {
+  //   playerVelocity.addScaledVector(normal, -normal.dot(playerVelocity))
+  // }
+
+  const result = worldOctree.capsuleIntersect( playerCollider );
+  playerOnFloor = false;
+  if ( result ) {
+    // console.log("collision detected");
+    playerOnFloor = result.normal.y > 0;
+    if ( ! playerOnFloor ) {
+      playerVelocity.addScaledVector( result.normal, - result.normal.dot( playerVelocity ) );
+    }
+    playerCollider.translate( result.normal.multiplyScalar( result.depth ) );
+  }
+}
+
 function updatePlayer (deltaTime) {
   let damping = Math.exp(-4 * deltaTime) - 1
 
@@ -106,8 +135,12 @@ function updatePlayer (deltaTime) {
 
   playerVelocity.addScaledVector(playerVelocity, damping)
   const deltaPosition = playerVelocity.clone().multiplyScalar(deltaTime)
+  playerCollider.translate( deltaPosition );
+
+  playerCollisions()
+
   playerPosition.add(deltaPosition)
-  camera.position.copy(playerPosition)
+  camera.position.copy(playerCollider.end)
 }
 
 function onPointerLockChange () {
@@ -151,6 +184,50 @@ function onWindowResize () {
   camera.aspect = window.innerWidth / window.innerHeight
   camera.updateProjectionMatrix()
   renderer.setSize(window.innerWidth, window.innerHeight)
+}
+
+function getChunk (x, z) {
+  const chunkX = Math.floor(x / CHUNK_SIZE + 0.5)
+  const chunkZ = Math.floor(z / CHUNK_SIZE + 0.5)
+  const chunkName = `${chunkX}$$${chunkZ}`
+  // console.log(loadedChunks.get(chunkName).geometry.attributes.position.array)
+  return loadedChunks.get(chunkName)
+}
+
+function getLandHeight () {
+  // get camera position
+  const player_min = camera.position.clone()
+  const player_max = camera.position.clone()
+  const delta = 1.5
+  player_min.add(new THREE.Vector3(-delta, -105, -delta))
+  player_max.add(new THREE.Vector3(delta, 5, delta))
+
+  // get player bounding box
+  const playerBoundingBox = new THREE.Box3(player_min, player_max)
+  // console.log(playerBoundingBox)
+  // get chunk below player
+  const chunkBelowPlayer = getChunk(camera.position.x, camera.position.z)
+  // get vertices of chunk contained by player bounding box
+  const chunkVertices = chunkBelowPlayer.geometry.attributes.position.array
+
+  let y_max = 0
+
+  for (let i = 0; i < chunkVertices.length / 3; i++) {
+    const _x = chunkVertices[i * 3]
+    const _y = chunkVertices[i * 3 + 1]
+    const _z = chunkVertices[i * 3 + 2]
+
+    if (_x >= -delta && _x <= delta && _z >= -delta && _z <= delta) {
+      // console.log("check " + _x + _y + _z);
+      y_max = Math.max(y_max, _y)
+    }
+
+    // if (playerBoundingBox.containsPoint(new THREE.Vector3(_x, _y, _z))) {
+    //   console.log("containsPoint");
+    // }
+  }
+  // console.log(y_max)
+  return y_max
 }
 
 /// ////////////////////////////////////////////////////////////////////////////
@@ -198,11 +275,13 @@ directionalLight.position.set(100, 100, 0)
 scene.add(directionalLight)
 
 let maxh = 0
+
 function makeChunk (chunk, x0, z0) {
   x0 += 6969
   z0 += 6969
   const vertices = chunk.geometry.attributes.position.array
   const uv = chunk.geometry.attributes.uv.array
+
   maxh = 8
   noise.seed(WORLD_SEED)
   for (let y = 0; y < CHUNK_SIZE; y++) {
@@ -252,7 +331,6 @@ function makeChunk (chunk, x0, z0) {
 /// ////////////////////////////////////////////////////////////////////////////
 // Animate
 
-const loadedChunks = new Map()
 function animate () {
   // Prevent user from moving when the pointer is not locked
   if (pointerLocked) {
@@ -270,20 +348,25 @@ function animate () {
       // // update score board on FE
       // currScoreHTML.innerText = currScore
     }
+    // getLandHeight()
 
     HUDposition.innerText = loadedChunks.size
   }
 
   const chunkX = Math.floor(camera.position.x / CHUNK_SIZE + 0.5)
   const chunkZ = Math.floor(camera.position.z / CHUNK_SIZE + 0.5)
-  let gencount = 0
-  for (let xoffset = -2; xoffset <= 2 && gencount < 1; xoffset++) {
-    for (let zoffset = -2; zoffset <= 2 && gencount < 1; zoffset++) {
+  let genCount = 0
+
+  const currChunkNum = loadedChunks.size
+
+  for (let xoffset = -1; xoffset <= 1 && genCount < 1; xoffset++) {
+    for (let zoffset = -1; zoffset <= 1 && genCount < 1; zoffset++) {
       const chunkXX = chunkX + xoffset
       const chunkZZ = chunkZ + zoffset
       const chunkName = `${chunkXX}$$${chunkZZ}`
 
       if (!loadedChunks.has(chunkName)) {
+        // console.log("Making new chunk", chunkName)
         const geometry = new THREE.PlaneGeometry(
           CHUNK_SIZE * CHUNK_SCALE,
           CHUNK_SIZE * CHUNK_SCALE,
@@ -295,9 +378,10 @@ function animate () {
         const chunk = new THREE.Mesh(geometry, MATERIALS.phong_material)
         chunk.receiveShadow = true
         scene.add(chunk)
-
+  
         chunk.position.x = chunkXX * CHUNK_SIZE
         chunk.position.z = chunkZZ * CHUNK_SIZE
+
         makeChunk(
           chunk,
           (chunkXX - 0.5) * CHUNK_SIZE,
@@ -305,9 +389,15 @@ function animate () {
         )
 
         loadedChunks.set(chunkName, chunk)
-        gencount++
+        genCount++
+        // console.log(loadedChunks)
       }
     }
+  }
+
+  if (currChunkNum !== loadedChunks.size) {
+    console.log("New Chunks loaded:", loadedChunks.size - currChunkNum)
+    worldOctree.fromGraphNode(scene)
   }
 
   // Unload chunks
