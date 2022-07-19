@@ -24,8 +24,11 @@ let pointerLocked = false
 const blocker = document.getElementById('blocker')
 const instructions = document.getElementById('instructions')
 const HUDposition = document.getElementById('HUDposition')
+const seedElement = document.getElementById('seed')
+const cameraPositionElement = document.getElementById('cameraPosition')
 const currScore = 0
 const currScoreHTML = document.getElementById('currScoreHTML')
+seedElement.innerText = WORLD_SEED
 /// ////////////////////////////////////////////////////////////////////////////
 // Set up renderer, scene and camera
 
@@ -263,9 +266,7 @@ function animate () {
       updatePlayer(deltaTime)
 
       // update position on FE
-      // HUDposition.innerText = `pos=(${playerPosition.x.toFixed(
-      //   1
-      // )},${playerPosition.y.toFixed(1)},${playerPosition.z.toFixed(1)})`
+      cameraPositionElement.innerText = `pos=(${playerPosition.x.toFixed(1)},${playerPosition.y.toFixed(1)},${playerPosition.z.toFixed(1)})`
 
       // // update score board on FE
       // currScoreHTML.innerText = currScore
