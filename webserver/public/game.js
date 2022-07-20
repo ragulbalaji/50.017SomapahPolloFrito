@@ -4,7 +4,7 @@
 const WORLD_SEED = Math.round(Math.random() * 4206969)
 const CHUNK_SIZE = 96
 const CHUNK_SCALE = 1
-const MAX_NUM_CHUNKS = 100
+const MAX_NUM_CHUNKS = 128
 const STEPS_PER_FRAME = 1
 const GRAVITY = 30
 const POINTER_SPEED = 2
@@ -210,6 +210,7 @@ init()
 function init () {
   stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
   seedElement.innerText = `seed=${WORLD_SEED}`
+  modeLabel.innerText = CREATIVE_MODE ? 'mode=CREATIVE' : 'mode=SURVIVAL'
   document.body.appendChild(stats.dom)
 
   renderer.setPixelRatio(window.devicePixelRatio)
