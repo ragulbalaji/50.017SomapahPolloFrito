@@ -1,7 +1,7 @@
 /// ////////////////////////////////////////////////////////////////////////////
 // Constants
 
-const WORLD_SEED = Math.round(Math.random() * 4206969)
+const WORLD_SEED = 1925401// Math.round(Math.random() * 4206969)
 const CHUNK_SIZE = 96
 const CHUNK_SCALE = 1
 const MAX_NUM_CHUNKS = 128
@@ -43,13 +43,14 @@ const renderer = new THREE.WebGLRenderer({
   antialias: true,
   precision: 'lowp'
 })
+renderer.outputEncoding = THREE.sRGBEncoding
 renderer.shadowMap.enabled = true
 renderer.shadowMap.type = THREE.PCFSoftShadowMap
 const scene = new THREE.Scene()
 const SKY_COLOR = 0x79a6ff
 scene.background = new THREE.Color(SKY_COLOR)
 // scene.fog = new THREE.Fog(SKY_COLOR, 0, 400)
-scene.fog = new THREE.FogExp2(SKY_COLOR, 0.004)
+scene.fog = new THREE.FogExp2(SKY_COLOR, 0.001)
 // scene.background = TEXTURES.tex_sky
 
 const camera = new THREE.PerspectiveCamera(
@@ -268,7 +269,7 @@ function makeChunk (chunk, x0, z0) {
 
       const i = 3 * (y * CHUNK_SIZE + x)
       let h =
-        noise.simplex2((x0 + x) / 4, (z0 + y) / 4) * (rain + 0.3) +
+        noise.simplex2((x0 + x) / 8, (z0 + y) / 8) * (rain + 0.3) +
         noise.simplex2((x0 + x) / 128, (z0 + y) / 128) * 4 +
         Math.min(32, noise.simplex2((x0 + x) / 768, (z0 + y) / 768) * 32 + 16)
 
@@ -303,6 +304,26 @@ function makeChunk (chunk, x0, z0) {
 
 /// ////////////////////////////////////////////////////////////////////////////
 // Animate
+
+const loader = new THREE.GLTFLoader()
+loader.load('assets/models/gltf/well.gltf.glb',
+  function (gltf) {
+    gltf.scene.scale.set(8, 8, 8)
+    scene.add(gltf.scene)
+
+    // gltf.animations; // Array<THREE.AnimationClip>
+    // gltf.scene; // THREE.Group
+    // gltf.scenes; // Array<THREE.Group>
+    // gltf.cameras; // Array<THREE.Camera>
+    // gltf.asset; // Object
+  },
+  function (xhr) {
+    console.log((xhr.loaded / xhr.total * 100) + '% loaded')
+  },
+  function (error) {
+    console.log('An error happened')
+  }
+)
 
 function animate () {
   // Prevent user from moving when the pointer is not locked
@@ -367,7 +388,7 @@ function animate () {
       const bDist = loadedChunks.get(b).position.distanceTo(playerPosition)
       return bDist - aDist
     })
-    for (let i = 0; i < chunkNames.length - MAX_NUM_CHUNKS; i++) {
+    for (let i = 0; i < chunkNames.length - MAX_NUM_CHUNKS * 0.8; i++) {
       const chunkName = chunkNames[i]
       const chunk = loadedChunks.get(chunkName)
       chunk.geometry.dispose()
