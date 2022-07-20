@@ -21,7 +21,7 @@ const playerPosition = new THREE.Vector3(0, PLAYER_INIT_HEIGHT, 0)
 const eulerAngle = new THREE.Euler(0, 0, 0, 'YXZ')
 let pointerLocked = false
 let playerOnFloor = true
-let CREATIVE_MODE = false
+let CREATIVE_MODE = true
 const keyStates = new Map() // to store key presses
 const loadedChunks = new Map() // to store currently loaded chunks
 
