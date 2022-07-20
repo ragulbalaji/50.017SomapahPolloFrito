@@ -13,6 +13,7 @@ const PLAYER_INIT_HEIGHT = 64
 const PLAYER_SPEED_GROUND = 60
 const PLAYER_SPEED_AIR = 30
 const CREATIVE_SPEED_FACTOR = 20
+const [LOWER_Y, UPPER_Y] = [0, 250] // world bounds
 
 const clock = new THREE.Clock()
 const playerVelocity = new THREE.Vector3()
@@ -119,6 +120,7 @@ function updatePlayer (deltaTime) {
   const deltaPosition = playerVelocity.clone().multiplyScalar(deltaTime)
   playerPosition.add(deltaPosition)
   playerCollisions()
+  boundPlayerPosition()
   camera.position.copy(playerPosition)
 }
 
@@ -192,6 +194,12 @@ function playerCollisions () {
       playerOnFloor = false
     }
   }
+}
+
+function boundPlayerPosition () {
+  // limit player position to be within world bounds
+  playerPosition.y = Math.min(playerPosition.y, UPPER_Y)
+  playerPosition.y = Math.max(playerPosition.y, LOWER_Y)
 }
 
 /// ////////////////////////////////////////////////////////////////////////////
