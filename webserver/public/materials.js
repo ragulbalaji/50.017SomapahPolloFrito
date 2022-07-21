@@ -29,8 +29,8 @@ const material = new THREE.ShaderMaterial({
 })
 
 const phong_material = new THREE.MeshPhongMaterial({
-  specular: 0xffffff,
-  shininess: 0.1,
+  color: 0xfdfbd3,
+  shininess: 10,
   flatShading: true,
   map: TEXTURES.tex_HandM
 })
