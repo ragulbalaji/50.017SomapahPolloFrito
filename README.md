@@ -1,5 +1,15 @@
 # 50.017 Somapah Pollo Frito
 
+
+## Game Controls
+
+- Click anywhere to start
+- Press `ESC` to pause the game
+- **Movement:** `W` `A` `S` `D` or `↑` `←` `↓` `→`
+- **Jump:** `Spacebar`
+- Press `C` to toggle CREATIVE mode (flying versus walking)
+
+
 ## Instructions
 
 First, change directory to the `webserver` directory:

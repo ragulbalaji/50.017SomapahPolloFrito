@@ -1,24 +1,30 @@
 /// ////////////////////////////////////////////////////////////////////////////
 // Constants
 
-const WORLD_SEED = Math.round(Math.random() * 4206969)
+const WORLD_SEED = 1925401// Math.round(Math.random() * 4206969)
 const CHUNK_SIZE = 96
 const CHUNK_SCALE = 1
+const MAX_NUM_CHUNKS = 128
 const STEPS_PER_FRAME = 1
 const GRAVITY = 30
 const POINTER_SPEED = 2
 const _PI_2 = Math.PI / 2
-const PLAYER_SPEED_GROUND = 1200
-const PLAYER_SPEED_AIR = 600
+const PLAYER_INIT_HEIGHT = 64
+const PLAYER_SPEED_GROUND = 60
+const PLAYER_SPEED_AIR = 30
+const CREATIVE_SPEED_FACTOR = 20
+const [LOWER_Y, UPPER_Y] = [0, 250] // world bounds
 
 const clock = new THREE.Clock()
-const keyStates = {} // to store key presses
-const playerOnFloor = true
 const playerVelocity = new THREE.Vector3()
 const playerDirection = new THREE.Vector3()
-const playerPosition = new THREE.Vector3(0, 64, 0)
+const playerPosition = new THREE.Vector3(0, PLAYER_INIT_HEIGHT, 0)
 const eulerAngle = new THREE.Euler(0, 0, 0, 'YXZ')
 let pointerLocked = false
+let playerOnFloor = true
+let CREATIVE_MODE = true
+const keyStates = new Map() // to store key presses
+const loadedChunks = new Map() // to store currently loaded chunks
 
 // references
 const blocker = document.getElementById('blocker')
@@ -26,9 +32,10 @@ const instructions = document.getElementById('instructions')
 const numOfLoadedChunksElement = document.getElementById('numOfLoadedChunks')
 const seedElement = document.getElementById('seed')
 const cameraPositionElement = document.getElementById('cameraPosition')
+const modeLabel = document.getElementById('mode')
 const currScore = 0
 const currScoreHTML = document.getElementById('currScoreHTML')
-seedElement.innerText = WORLD_SEED
+
 /// ////////////////////////////////////////////////////////////////////////////
 // Set up renderer, scene and camera
 
@@ -36,13 +43,14 @@ const renderer = new THREE.WebGLRenderer({
   antialias: true,
   precision: 'lowp'
 })
+renderer.outputEncoding = THREE.sRGBEncoding
 renderer.shadowMap.enabled = true
 renderer.shadowMap.type = THREE.PCFSoftShadowMap
 const scene = new THREE.Scene()
 const SKY_COLOR = 0x79a6ff
 scene.background = new THREE.Color(SKY_COLOR)
 // scene.fog = new THREE.Fog(SKY_COLOR, 0, 400)
-scene.fog = new THREE.FogExp2(SKY_COLOR, 0.004)
+scene.fog = new THREE.FogExp2(SKY_COLOR, 0.001)
 // scene.background = TEXTURES.tex_sky
 
 const camera = new THREE.PerspectiveCamera(
@@ -58,6 +66,7 @@ camera.position.z = playerPosition.z
 camera.lookAt(16, 0, 0)
 
 const stats = new Stats()
+const rayCaster = new THREE.Raycaster()
 
 /// ////////////////////////////////////////////////////////////////////////////
 // Controls
@@ -80,6 +89,7 @@ function getSideVector () {
 function controls (deltaTime) {
   let speedDelta =
     deltaTime * (playerOnFloor ? PLAYER_SPEED_GROUND : PLAYER_SPEED_AIR)
+  speedDelta *= CREATIVE_MODE ? CREATIVE_SPEED_FACTOR : 1
   // if shift is pressed then move at one-third speed
   if (keyStates.ShiftLeft || keyStates.ShiftRight) speedDelta /= 3
   // move forward
@@ -95,7 +105,7 @@ function controls (deltaTime) {
   // fly down
   if (keyStates.KeyE || keyStates.KeyX) playerVelocity.y -= speedDelta
   // jump if player on floor
-  if (playerOnFloor && keyStates.Space) playerVelocity.y = 15
+  if (playerOnFloor && keyStates.Space) playerVelocity.y = 30
 }
 
 function updatePlayer (deltaTime) {
@@ -110,6 +120,8 @@ function updatePlayer (deltaTime) {
   playerVelocity.addScaledVector(playerVelocity, damping)
   const deltaPosition = playerVelocity.clone().multiplyScalar(deltaTime)
   playerPosition.add(deltaPosition)
+  playerCollisions()
+  boundPlayerPosition()
   camera.position.copy(playerPosition)
 }
 
@@ -156,6 +168,41 @@ function onWindowResize () {
   renderer.setSize(window.innerWidth, window.innerHeight)
 }
 
+function toggleCreativeMode () {
+  if (!CREATIVE_MODE) {
+    CREATIVE_MODE = true
+    playerOnFloor = true
+    playerVelocity.y = 0
+    playerPosition.y = PLAYER_INIT_HEIGHT
+    modeLabel.innerText = 'mode=CREATIVE'
+  } else {
+    CREATIVE_MODE = false
+    modeLabel.innerText = 'mode=SURVIVAL'
+  }
+}
+
+function playerCollisions () {
+  if (CREATIVE_MODE) return
+
+  rayCaster.set(playerPosition, new THREE.Vector3(0, -1, 0))
+  const intersects = rayCaster.intersectObjects(scene.children)
+  if (intersects.length > 0) {
+    if (intersects[0].distance < 3) {
+      const normal = intersects[0].face.normal
+      playerOnFloor = true
+      playerVelocity.addScaledVector(normal, -normal.dot(playerVelocity))
+    } else {
+      playerOnFloor = false
+    }
+  }
+}
+
+function boundPlayerPosition () {
+  // limit player position to be within world bounds
+  playerPosition.y = Math.min(playerPosition.y, UPPER_Y)
+  playerPosition.y = Math.max(playerPosition.y, LOWER_Y)
+}
+
 /// ////////////////////////////////////////////////////////////////////////////
 // Initialize
 
@@ -163,6 +210,8 @@ init()
 
 function init () {
   stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
+  seedElement.innerText = `seed=${WORLD_SEED}`
+  modeLabel.innerText = CREATIVE_MODE ? 'mode=CREATIVE' : 'mode=SURVIVAL'
   document.body.appendChild(stats.dom)
 
   renderer.setPixelRatio(window.devicePixelRatio)
@@ -184,6 +233,7 @@ function init () {
 
   document.addEventListener('keydown', (e) => {
     keyStates[e.code] = true
+    if (e.code === 'KeyC') toggleCreativeMode()
   })
   document.addEventListener('keyup', (e) => {
     keyStates[e.code] = false
@@ -219,7 +269,7 @@ function makeChunk (chunk, x0, z0) {
 
       const i = 3 * (y * CHUNK_SIZE + x)
       let h =
-        noise.simplex2((x0 + x) / 4, (z0 + y) / 4) * (rain + 0.3) +
+        noise.simplex2((x0 + x) / 8, (z0 + y) / 8) * (rain + 0.3) +
         noise.simplex2((x0 + x) / 128, (z0 + y) / 128) * 4 +
         Math.min(32, noise.simplex2((x0 + x) / 768, (z0 + y) / 768) * 32 + 16)
 
@@ -255,7 +305,26 @@ function makeChunk (chunk, x0, z0) {
 /// ////////////////////////////////////////////////////////////////////////////
 // Animate
 
-const loadedChunks = new Map()
+const loader = new THREE.GLTFLoader()
+loader.load('assets/models/gltf/well.gltf.glb',
+  function (gltf) {
+    gltf.scene.scale.set(8, 8, 8)
+    scene.add(gltf.scene)
+
+    // gltf.animations; // Array<THREE.AnimationClip>
+    // gltf.scene; // THREE.Group
+    // gltf.scenes; // Array<THREE.Group>
+    // gltf.cameras; // Array<THREE.Camera>
+    // gltf.asset; // Object
+  },
+  function (xhr) {
+    console.log((xhr.loaded / xhr.total * 100) + '% loaded')
+  },
+  function (error) {
+    console.log('An error happened')
+  }
+)
+
 function animate () {
   // Prevent user from moving when the pointer is not locked
   if (pointerLocked) {
@@ -272,7 +341,7 @@ function animate () {
       // currScoreHTML.innerText = currScore
     }
 
-    numOfLoadedChunksElement.innerText = loadedChunks.size
+    numOfLoadedChunksElement.innerText = `chunks_loaded=${loadedChunks.size}`
   }
 
   const chunkX = Math.floor(camera.position.x / CHUNK_SIZE + 0.5)
@@ -351,14 +420,19 @@ function animate () {
   }
 
   // Unload chunks
-  if (loadedChunks.size > 64) {
-    for (const [chunkName, chunk] of loadedChunks) {
-      const dist = Math.pow(chunk.position.x - playerPosition.x, 2) + Math.pow(chunk.position.z - playerPosition.z, 2)
-      if (dist > 160000) {
-        chunk.geometry.dispose()
-        scene.remove(chunk)
-        loadedChunks.delete(chunkName)
-      }
+  if (loadedChunks.size > MAX_NUM_CHUNKS) {
+    const chunkNames = Array.from(loadedChunks.keys())
+    chunkNames.sort((a, b) => {
+      const aDist = loadedChunks.get(a).position.distanceTo(playerPosition)
+      const bDist = loadedChunks.get(b).position.distanceTo(playerPosition)
+      return bDist - aDist
+    })
+    for (let i = 0; i < chunkNames.length - MAX_NUM_CHUNKS * 0.8; i++) {
+      const chunkName = chunkNames[i]
+      const chunk = loadedChunks.get(chunkName)
+      chunk.geometry.dispose()
+      scene.remove(chunk)
+      loadedChunks.delete(chunkName)
     }
   }
 

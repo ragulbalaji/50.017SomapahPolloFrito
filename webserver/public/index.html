@@ -11,19 +11,21 @@
 
 <body>
   <div id="headupdisplay">Terrain Game Tech Test
-    <p id="seed">-</p>
-    <p id="cameraPosition">-</p>
-    <p id="currScoreHTML">-</p>
-    <p id="numOfLoadedChunks">-</p>
+    <p id="seed">seed</p>
+    <p id="cameraPosition">pos</p>
+    <p id="currScoreHTML">score</p>
+    <p id="numOfLoadedChunks">chunks</p>
+    <p id="mode">mode</p>
   </div>
 
   <div id="blocker">
     <div id="instructions">
-      <p style="font-size: 36px">
+      <p id="title">
         Click to Enter Somapah Pollo Frito
       </p>
       <p>
-        Move: WASD<br />
+        Toggle Mode: Press 'C'<br />
+        Move: W A S D<br />
         Jump: SPACE<br />
         Look: MOUSE<br />
         Quit: ESC
@@ -33,6 +35,7 @@
 </body>
 
 <script src="assets/lib/three.min.js"></script>
+<script src="assets/lib/GLTFLoader.js"></script>
 <script src="assets/lib/stats.min.js"></script>
 <script src="assets/lib/noises.js"></script>
 <script src="textures.js"></script>
