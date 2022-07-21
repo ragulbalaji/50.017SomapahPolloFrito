@@ -366,12 +366,12 @@ function animate () {
         chunk.receiveShadow = true
         scene.add(chunk)
 
-        chunk.position.x = chunkXX * (CHUNK_SIZE - 1)
-        chunk.position.z = chunkZZ * (CHUNK_SIZE - 1)
+        chunk.position.x = chunkXX * CHUNK_SIZE - 1
+        chunk.position.z = chunkZZ * CHUNK_SIZE - 1
         makeChunk(
           chunk,
-          (chunkXX - 0.5) * CHUNK_SIZE,
-          (chunkZZ - 0.5) * CHUNK_SIZE
+          (chunkXX - 0.5) * (CHUNK_SIZE - 1),
+          (chunkZZ - 0.5) * (CHUNK_SIZE - 1)
         )
 
         loadedChunks.set(chunkName, chunk)
