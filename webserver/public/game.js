@@ -305,6 +305,45 @@ function animate () {
           (chunkZZ - 0.5) * CHUNK_SIZE
         )
 
+        // Fix the seams
+        /*
+        const vertices = chunk.geometry.attributes.position.array
+        const uv = chunk.geometry.attributes.uv.array
+        const neighborChunks = [
+          [chunkXX - 1, chunkZZ],
+          [chunkXX + 1, chunkZZ],
+          [chunkXX, chunkZZ - 1],
+          [chunkXX, chunkZZ + 1]
+        ]
+        for (const [chunkXXX, chunkZZZ] of neighborChunks) {
+          const neighborChunkName = `${chunkXXX}$$${chunkZZZ}`
+          if (loadedChunks.has(neighborChunkName)) {
+            const neighborChunk = loadedChunks.get(neighborChunkName)
+            const neighborChunkVertices = neighborChunk.geometry.attributes.position.array
+            const neighborChunkUvs = neighborChunk.geometry.attributes.uv.array
+            for (let z = 0; z < CHUNK_SIZE; z++) {
+              for (let x = 0; x < CHUNK_SIZE; x++) {
+                const j = 2 * (z * CHUNK_SIZE + x)
+                const i = 3 * (z * CHUNK_SIZE + x)
+                if (x == 0 || x == CHUNK_SIZE - 1) {
+                  const neighborI = 3 * (z * CHUNK_SIZE + CHUNK_SIZE - 1 - x)
+                  const neighborJ = 2 * (z * CHUNK_SIZE + CHUNK_SIZE - 1 - x)
+                  vertices[i + 1] = neighborChunkVertices[neighborI + 1]
+                  uv[j] = neighborChunkUvs[neighborJ]
+                  uv[j + 1] = neighborChunkUvs[neighborJ + 1]
+                } else if (z == 0 || z == CHUNK_SIZE - 1) {
+                  const neighborI = 3 * (x * CHUNK_SIZE + CHUNK_SIZE - 1 - z)
+                  const neighborJ = 2 * (x * CHUNK_SIZE + CHUNK_SIZE - 1 - z)
+                  vertices[i + 1] = neighborChunkVertices[neighborI + 1]
+                  uv[j] = neighborChunkUvs[neighborJ]
+                  uv[j + 1] = neighborChunkUvs[neighborJ + 1]
+                }
+              }
+            }
+          }
+        }
+        */
+
         loadedChunks.set(chunkName, chunk)
         gencount++
       }
