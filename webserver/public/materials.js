@@ -1,11 +1,11 @@
-const phong_material = new THREE.MeshPhongMaterial({
+const phongMaterial = new THREE.MeshPhongMaterial({
   color: 0xfdfbd3,
   shininess: 10,
   flatShading: true,
   map: TEXTURES.tex_HandM
 })
 
-phong_material.onBeforeCompile = function (materialInfo) {
+phongMaterial.onBeforeCompile = function (materialInfo) {
   materialInfo.vertexUvs = true
   materialInfo.uvsVertexOnly = false
   materialInfo.vertexShader = materialInfo.vertexShader.replace(
@@ -39,7 +39,7 @@ phong_material.onBeforeCompile = function (materialInfo) {
   )
 }
 
-const shader_material = new THREE.ShaderMaterial({
+const shaderMaterial = new THREE.ShaderMaterial({
   vertexShader: `varying vec3 vPosition;
   varying vec2 vUV;
   void main() {
@@ -68,8 +68,8 @@ const shader_material = new THREE.ShaderMaterial({
 })
 
 const MATERIALS = {
-  phong_material,
-  shader_material,
-  normal_material: new THREE.MeshNormalMaterial({ flatShading: true }),
-  wireframe_material: new THREE.MeshStandardMaterial({ color: 0x000000, wireframe: true }),
+  phongMaterial,
+  shaderMaterial,
+  normalMaterial: new THREE.MeshNormalMaterial({ flatShading: true }),
+  wireframeMaterial: new THREE.MeshStandardMaterial({ color: 0x000000, wireframe: true })
 }

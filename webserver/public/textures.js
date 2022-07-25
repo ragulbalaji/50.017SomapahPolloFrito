@@ -1,8 +1,8 @@
-const texture_loader = new THREE.TextureLoader()
+const textureLoader = new THREE.TextureLoader()
 
 const TEXTURES = {
-  tex_grass: texture_loader.load('assets/tex/grass.png'),
-  tex_HandM: texture_loader.load('assets/tex/biome-lookup-discrete.png'),
-  tex_sky: texture_loader.load('assets/tex/sky.jpg'),
-  tex_test: texture_loader.load('assets/tex/texmap.png')
+  tex_grass: textureLoader.load('assets/tex/grass.png'),
+  tex_HandM: textureLoader.load('assets/tex/biome-lookup-discrete.png'),
+  tex_sky: textureLoader.load('assets/tex/sky.jpg'),
+  tex_test: textureLoader.load('assets/tex/texmap.png')
 }
