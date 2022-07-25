@@ -6,10 +6,11 @@ const CHUNK_SIZE = 96
 const CHUNK_SCALE = 1
 const MAX_NUM_CHUNKS = 128
 const STEPS_PER_FRAME = 1
-const GRAVITY = 30
+const GRAVITY = 70
 const POINTER_SPEED = 2
 const _PI_2 = Math.PI / 2
 const PLAYER_INIT_HEIGHT = 64
+const PLAYER_HEIGHT = 20
 const PLAYER_SPEED_GROUND = 60
 const PLAYER_SPEED_AIR = 30
 const CREATIVE_SPEED_FACTOR = 20
@@ -189,7 +190,7 @@ function playerCollisions () {
   rayCaster.set(playerPosition, new THREE.Vector3(0, -1, 0))
   const intersects = rayCaster.intersectObjects(scene.children)
   if (intersects.length > 0) {
-    if (intersects[0].distance < 3) {
+    if (intersects[0].distance < PLAYER_HEIGHT) {
       const normal = intersects[0].face.normal
       playerOnFloor = true
       playerVelocity.addScaledVector(normal, -normal.dot(playerVelocity))
