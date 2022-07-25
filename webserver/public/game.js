@@ -362,7 +362,7 @@ function animate () {
         )
         geometry.rotateX(-Math.PI / 2)
 
-        const chunk = new THREE.Mesh(geometry, MATERIALS.material)
+        const chunk = new THREE.Mesh(geometry, MATERIALS.phong_material)
         chunk.receiveShadow = true
         scene.add(chunk)
 
