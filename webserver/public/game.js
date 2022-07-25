@@ -13,7 +13,9 @@ const PLAYER_INIT_HEIGHT = 64
 const PLAYER_SPEED_GROUND = 60
 const PLAYER_SPEED_AIR = 30
 const CREATIVE_SPEED_FACTOR = 20
-const [LOWER_Y, UPPER_Y] = [0, 250] // world bounds
+const [LOWER_Y, UPPER_Y] = [0, 250] // vertical world bounds
+const [LOWER_X, UPPER_X] = [-1e14, 1e14] // x-axis world bounds
+const [LOWER_Z, UPPER_Z] = [-1e14, 1e14] // z-axis world bounds
 
 const clock = new THREE.Clock()
 const playerVelocity = new THREE.Vector3()
@@ -201,6 +203,10 @@ function boundPlayerPosition () {
   // limit player position to be within world bounds
   playerPosition.y = Math.min(playerPosition.y, UPPER_Y)
   playerPosition.y = Math.max(playerPosition.y, LOWER_Y)
+  playerPosition.x = Math.min(playerPosition.x, UPPER_X)
+  playerPosition.x = Math.max(playerPosition.x, LOWER_X)
+  playerPosition.z = Math.min(playerPosition.z, UPPER_Z)
+  playerPosition.z = Math.max(playerPosition.z, LOWER_Z)
 }
 
 /// ////////////////////////////////////////////////////////////////////////////
