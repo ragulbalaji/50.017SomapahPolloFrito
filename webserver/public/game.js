@@ -332,6 +332,8 @@ loader.load('assets/models/gltf/well.gltf.glb',
   }
 )
 
+const treeSrcArray = ['assets/models/gltf/detail_treeA.gltf.glb', 'assets/models/gltf/detail_treeB.gltf.glb', 'assets/models/gltf/detail_treeC.gltf.glb']
+
 function animate () {
   // Prevent user from moving when the pointer is not locked
   if (pointerLocked) {
@@ -383,6 +385,30 @@ function animate () {
 
         loadedChunks.set(chunkName, chunk)
         gencount++
+
+        let tree
+        let treeSrc = treeSrcArray[Math.floor(Math.random()*treeSrcArray.length)]
+        loader.load(treeSrc,
+          function (gltf) {
+            tree = gltf.scene
+            tree.position.x = chunk.position.x
+            tree.position.z = chunk.position.z
+            tree.position.x *= (Math.random() * (1.5 - 0.5) + 0.5)
+            tree.position.z *= (Math.random() * (1.5 - 0.5) + 0.5)
+            tree.scale.set(8, 8, 8)
+
+            if (chunk.position.z > 0) {
+              scene.add(tree)
+            }
+
+          },
+          function (xhr) {
+            console.log((xhr.loaded / xhr.total * 100) + '% loaded')
+          },
+          function (error) {
+            console.log('An error happened')
+          }
+        )
       }
     }
   }
