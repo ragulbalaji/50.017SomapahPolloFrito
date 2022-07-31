@@ -1,12 +1,15 @@
 /// ////////////////////////////////////////////////////////////////////////////
 // Constants
 
-const WORLD_SEED = 1925401// Math.round(Math.random() * 4206969)
-const CHUNK_SIZE = 96
+const PARAMETERS = {
+  world_seed: 1925401, // Math.round(Math.random() * 4206969)
+  chunk_size: 96,
+  max_num_chunks: 128,
+  gravity: 70,
+}
+
 const CHUNK_SCALE = 1
-const MAX_NUM_CHUNKS = 128
 const STEPS_PER_FRAME = 1
-const GRAVITY = 70
 const POINTER_SPEED = 2
 const _PI_2 = Math.PI / 2
 const PLAYER_INIT_HEIGHT = 64
@@ -29,7 +32,7 @@ let CREATIVE_MODE = true
 const keyStates = new Map() // to store key presses
 const loadedChunks = new Map() // to store currently loaded chunks
 
-// references
+// References
 const blocker = document.getElementById('blocker')
 const instructions = document.getElementById('instructions')
 const numOfLoadedChunksElement = document.getElementById('numOfLoadedChunks')
@@ -115,7 +118,7 @@ function updatePlayer (deltaTime) {
   let damping = Math.exp(-4 * deltaTime) - 1
 
   if (!playerOnFloor) {
-    playerVelocity.y -= GRAVITY * deltaTime
+    playerVelocity.y -= PARAMETERS.gravity * deltaTime
     // small air resistance
     damping *= 0.1
   }
@@ -217,7 +220,7 @@ init()
 
 function init () {
   stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
-  seedElement.innerText = `seed=${WORLD_SEED}`
+  seedElement.innerText = `seed=${PARAMETERS.world_seed}`
   modeLabel.innerText = CREATIVE_MODE ? 'mode=CREATIVE' : 'mode=SURVIVAL'
   document.body.appendChild(stats.dom)
 
@@ -264,17 +267,17 @@ function makeChunk (chunk, x0, z0) {
   const vertices = chunk.geometry.attributes.position.array
   const uv = chunk.geometry.attributes.uv.array
   maxh = 8
-  noise.seed(WORLD_SEED)
-  for (let y = 0; y < CHUNK_SIZE; y++) {
-    for (let x = 0; x < CHUNK_SIZE; x++) {
-      const j = 2 * (y * CHUNK_SIZE + x)
+  noise.seed(PARAMETERS.world_seed)
+  for (let y = 0; y < PARAMETERS.chunk_size; y++) {
+    for (let x = 0; x < PARAMETERS.chunk_size; x++) {
+      const j = 2 * (y * PARAMETERS.chunk_size + x)
       const temp = (noise.simplex2((x0 + x) / 512, (z0 + y) / 512) + 1) / 2
       let rain = (noise.simplex2((x0 + x) / 256, (z0 + y) / 256) + 1) / 2
       rain = Math.min(rain, 0.99 - temp)
       uv[j] = temp
       uv[j + 1] = rain
 
-      const i = 3 * (y * CHUNK_SIZE + x)
+      const i = 3 * (y * PARAMETERS.chunk_size + x)
       let h =
         noise.simplex2((x0 + x) / 8, (z0 + y) / 8) * (rain + 0.3) +
         noise.simplex2((x0 + x) / 128, (z0 + y) / 128) * 4 +
@@ -308,6 +311,29 @@ function makeChunk (chunk, x0, z0) {
   chunk.geometry.attributes.position.needsUpdate = true
   chunk.geometry.attributes.uv.needsUpdate = true
 }
+
+function unloadChunk(chunkName) {
+  const chunk = loadedChunks.get(chunkName)
+  chunk.geometry.dispose()
+  scene.remove(chunk)
+  loadedChunks.delete(chunkName)
+}
+
+function unloadAllLoadedChunks() {
+  for (const chunkName of loadedChunks.keys()) {
+    unloadChunk(chunkName)
+  }
+}
+
+/// ////////////////////////////////////////////////////////////////////////////
+// GUI
+
+const gui = new lil.GUI()
+
+gui.add(PARAMETERS, 'world_seed', Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER, 1).name("World Seed").onChange(unloadAllLoadedChunks)
+gui.add(PARAMETERS, 'chunk_size', 1, 128, 1).name("Chunk Size").onChange(unloadAllLoadedChunks)
+gui.add(PARAMETERS, 'max_num_chunks', 1, 128, 1).name("Max Num of Chunks").onChange(unloadAllLoadedChunks)
+gui.add(PARAMETERS, 'gravity', 1, 100, 1).name("Gravity")
 
 /// ////////////////////////////////////////////////////////////////////////////
 // Animate
@@ -351,8 +377,9 @@ function animate () {
     numOfLoadedChunksElement.innerText = `chunks_loaded=${loadedChunks.size}`
   }
 
-  const chunkX = Math.floor(camera.position.x / CHUNK_SIZE + 0.5)
-  const chunkZ = Math.floor(camera.position.z / CHUNK_SIZE + 0.5)
+  const chunkX = Math.floor(camera.position.x / PARAMETERS.chunk_size + 0.5)
+  const chunkZ = Math.floor(camera.position.z / PARAMETERS.chunk_size + 0.5)
+  // For incremental rendering
   let gencount = 0
   for (let xoffset = -2; xoffset <= 2 && gencount < 1; xoffset++) {
     for (let zoffset = -2; zoffset <= 2 && gencount < 1; zoffset++) {
@@ -362,10 +389,10 @@ function animate () {
 
       if (!loadedChunks.has(chunkName)) {
         const geometry = new THREE.PlaneGeometry(
-          CHUNK_SIZE * CHUNK_SCALE,
-          CHUNK_SIZE * CHUNK_SCALE,
-          CHUNK_SIZE - 1,
-          CHUNK_SIZE - 1
+          PARAMETERS.chunk_size * CHUNK_SCALE,
+          PARAMETERS.chunk_size * CHUNK_SCALE,
+          PARAMETERS.chunk_size - 1,
+          PARAMETERS.chunk_size - 1
         )
         geometry.rotateX(-Math.PI / 2)
 
@@ -373,12 +400,12 @@ function animate () {
         chunk.receiveShadow = true
         scene.add(chunk)
 
-        chunk.position.x = chunkXX * CHUNK_SIZE
-        chunk.position.z = chunkZZ * CHUNK_SIZE
+        chunk.position.x = chunkXX * PARAMETERS.chunk_size
+        chunk.position.z = chunkZZ * PARAMETERS.chunk_size
         makeChunk(
           chunk,
-          (chunkXX - 0.5) * (CHUNK_SIZE - 1),
-          (chunkZZ - 0.5) * (CHUNK_SIZE - 1)
+          (chunkXX - 0.5) * (PARAMETERS.chunk_size - 1),
+          (chunkZZ - 0.5) * (PARAMETERS.chunk_size - 1)
         )
 
         loadedChunks.set(chunkName, chunk)
@@ -388,19 +415,16 @@ function animate () {
   }
 
   // Unload chunks
-  if (loadedChunks.size > MAX_NUM_CHUNKS) {
+  if (loadedChunks.size > PARAMETERS.max_num_chunks) {
     const chunkNames = Array.from(loadedChunks.keys())
     chunkNames.sort((a, b) => {
       const aDist = loadedChunks.get(a).position.distanceTo(playerPosition)
       const bDist = loadedChunks.get(b).position.distanceTo(playerPosition)
       return bDist - aDist
     })
-    for (let i = 0; i < chunkNames.length - MAX_NUM_CHUNKS * 0.8; i++) {
+    for (let i = 0; i < chunkNames.length - PARAMETERS.max_num_chunks * 0.8; i++) {
       const chunkName = chunkNames[i]
-      const chunk = loadedChunks.get(chunkName)
-      chunk.geometry.dispose()
-      scene.remove(chunk)
-      loadedChunks.delete(chunkName)
+      unloadChunk(chunkName)
     }
   }
 
