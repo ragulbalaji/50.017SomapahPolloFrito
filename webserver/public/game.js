@@ -5,6 +5,7 @@ const WORLD_SEED = 1925401// Math.round(Math.random() * 4206969)
 const CHUNK_SIZE = 96
 const CHUNK_SCALE = 1
 const MAX_NUM_CHUNKS = 128
+const MAX_NUM_TREES = 128
 const STEPS_PER_FRAME = 1
 const GRAVITY = 70
 const POINTER_SPEED = 2
@@ -28,6 +29,7 @@ let playerOnFloor = true
 let CREATIVE_MODE = true
 const keyStates = new Map() // to store key presses
 const loadedChunks = new Map() // to store currently loaded chunks
+const loadedTrees = new Map()
 
 // references
 const blocker = document.getElementById('blocker')
@@ -391,14 +393,24 @@ function animate () {
         loader.load(treeSrc,
           function (gltf) {
             tree = gltf.scene
-            tree.position.x = chunk.position.x
-            tree.position.z = chunk.position.z
+            let pos = 1, count = 1;
+
+            for (let i = 0; i < CHUNK_SIZE; i++) {
+              console.log(chunk.geometry.attributes.position.array[i])
+              pos += chunk.geometry.attributes.position.array[i]
+              count++;
+            }
+            tree.position.x = pos / count
+            tree.position.z = pos / count
             tree.position.x *= (Math.random() * (1.5 - 0.5) + 0.5)
             tree.position.z *= (Math.random() * (1.5 - 0.5) + 0.5)
             tree.scale.set(8, 8, 8)
-
+            
+          
             if (chunk.position.z > 0) {
               scene.add(tree)
+              let treeName = `${tree.position.x}$$${tree.position.z}`
+              loadedTrees.set(treeName, tree)
             }
 
           },
@@ -427,6 +439,22 @@ function animate () {
       chunk.geometry.dispose()
       scene.remove(chunk)
       loadedChunks.delete(chunkName)
+    }
+  }
+
+  if (loadedTrees.size > 100) {
+    const treeNames = Array.from(loadedTrees.keys())
+    treeNames.sort((a ,b) => {
+      const aDist = loadedTrees.get(a).position.distanceTo(playerPosition)
+      const bDist = loadedTrees.get(b).position.distanceTo(playerPosition)
+      return bDist - aDist
+    })
+    for (let i = 0; i < treeNames.length - MAX_NUM_CHUNKS * 0.8; i++) {
+      const outOfMemTree = treeNames[i]
+      const removedTree = loadedChunks.get(outOfMemTree)
+      // removedTree.geometry.dispose()
+      scene.remove(removedTree)
+      loadedChunks.delete(removedTree)
     }
   }
 
