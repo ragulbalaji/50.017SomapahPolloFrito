@@ -39,6 +39,10 @@ phongMaterial.onBeforeCompile = function (materialInfo) {
   )
 }
 
+phongMaterial.toString = function () {
+  return 'Phong Material'
+}
+
 const shaderMaterial = new THREE.ShaderMaterial({
   vertexShader: `varying vec3 vPosition;
   varying vec2 vUV;
@@ -67,9 +71,25 @@ const shaderMaterial = new THREE.ShaderMaterial({
   }
 })
 
+shaderMaterial.toString = function () {
+  return 'Shader Material'
+}
+
+const normalMaterial = new THREE.MeshNormalMaterial({ flatShading: true })
+
+normalMaterial.toString = function () {
+  return 'Normal Material'
+}
+
+const wireframeMaterial = new THREE.MeshStandardMaterial({ color: 0x000000, wireframe: true })
+
+wireframeMaterial.toString = function () {
+  return 'Wireframe Material'
+}
+
 const MATERIALS = {
   phongMaterial,
   shaderMaterial,
-  normalMaterial: new THREE.MeshNormalMaterial({ flatShading: true }),
-  wireframeMaterial: new THREE.MeshStandardMaterial({ color: 0x000000, wireframe: true })
+  normalMaterial,
+  wireframeMaterial
 }

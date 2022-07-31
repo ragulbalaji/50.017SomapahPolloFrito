@@ -6,6 +6,7 @@ const PARAMETERS = {
   chunk_size: 96,
   max_num_chunks: 128,
   gen_depth: 2,
+  chunk_material: MATERIALS.phongMaterial,
   gravity: 70,
   camera_position: '(0.0, 0.0, 0.0)',
   num_of_loaded_chunks: 0,
@@ -337,6 +338,7 @@ controlsFolder.add(PARAMETERS, 'world_seed', Number.MIN_SAFE_INTEGER, Number.MAX
 controlsFolder.add(PARAMETERS, 'chunk_size', 16, 256, 1).name('Chunk Size').onFinishChange(unloadAllLoadedChunks)
 controlsFolder.add(PARAMETERS, 'max_num_chunks', 81, 512, 1).name('Maximum Number of Chunks').onFinishChange(unloadAllLoadedChunks)
 controlsFolder.add(PARAMETERS, 'gen_depth', 1, 4, 1).name('Generate Depth').onFinishChange(unloadAllLoadedChunks)
+controlsFolder.add(PARAMETERS, 'chunk_material', Object.values(MATERIALS)).name('Chunk Material').onFinishChange(unloadAllLoadedChunks)
 controlsFolder.add(PARAMETERS, 'gravity', 1, 100, 1).name('Gravity')
 
 const hudFolder = gui.addFolder('HUD')
@@ -409,7 +411,7 @@ function animate () {
         )
         geometry.rotateX(-Math.PI / 2)
 
-        const chunk = new THREE.Mesh(geometry, MATERIALS.phongMaterial)
+        const chunk = new THREE.Mesh(geometry, PARAMETERS.chunk_material)
         chunk.receiveShadow = true
         scene.add(chunk)
 
