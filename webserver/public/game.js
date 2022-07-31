@@ -5,6 +5,7 @@ const PARAMETERS = {
   world_seed: 1925401, // Math.round(Math.random() * 4206969)
   chunk_size: 96,
   max_num_chunks: 128,
+  gen_depth: 2,
   gravity: 70,
   camera_position: '(0.0, 0.0, 0.0)',
   num_of_loaded_chunks: 0,
@@ -13,7 +14,7 @@ const PARAMETERS = {
 }
 
 const CHUNK_SCALE = 1
-const STEPS_PER_FRAME = 1
+const STEPS_PER_FRAME = 3
 const POINTER_SPEED = 2
 const _PI_2 = Math.PI / 2
 const PLAYER_INIT_HEIGHT = 64
@@ -333,8 +334,9 @@ gui.title('Terrain Game Tech Test')
 const controlsFolder = gui.addFolder('Controls')
 
 controlsFolder.add(PARAMETERS, 'world_seed', Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER, 1).name('World Seed').onFinishChange(unloadAllLoadedChunks)
-controlsFolder.add(PARAMETERS, 'chunk_size', 2, 128, 1).name('Chunk Size').onFinishChange(unloadAllLoadedChunks)
-controlsFolder.add(PARAMETERS, 'max_num_chunks', 40, 128, 1).name('Maximum Number of Chunks').onFinishChange(unloadAllLoadedChunks)
+controlsFolder.add(PARAMETERS, 'chunk_size', 16, 256, 1).name('Chunk Size').onFinishChange(unloadAllLoadedChunks)
+controlsFolder.add(PARAMETERS, 'max_num_chunks', 81, 512, 1).name('Maximum Number of Chunks').onFinishChange(unloadAllLoadedChunks)
+controlsFolder.add(PARAMETERS, 'gen_depth', 1, 4, 1).name('Generate Depth').onFinishChange(unloadAllLoadedChunks)
 controlsFolder.add(PARAMETERS, 'gravity', 1, 100, 1).name('Gravity')
 
 const hudFolder = gui.addFolder('HUD')
@@ -392,8 +394,8 @@ function animate () {
   const chunkZ = Math.floor(camera.position.z / PARAMETERS.chunk_size + 0.5)
   // For incremental rendering
   let gencount = 0
-  for (let xoffset = -2; xoffset <= 2 && gencount < 1; xoffset++) {
-    for (let zoffset = -2; zoffset <= 2 && gencount < 1; zoffset++) {
+  for (let xoffset = -PARAMETERS.gen_depth; xoffset <= PARAMETERS.gen_depth && gencount < 1; xoffset++) {
+    for (let zoffset = -PARAMETERS.gen_depth; zoffset <= PARAMETERS.gen_depth && gencount < 1; zoffset++) {
       const chunkXX = chunkX + xoffset
       const chunkZZ = chunkZ + zoffset
       const chunkName = `${chunkXX}$$${chunkZZ}`
