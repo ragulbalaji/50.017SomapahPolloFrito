@@ -333,8 +333,8 @@ gui.title('Terrain Game Tech Test')
 const controlsFolder = gui.addFolder('Controls')
 
 controlsFolder.add(PARAMETERS, 'world_seed', Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER, 1).name('World Seed').onFinishChange(unloadAllLoadedChunks)
-controlsFolder.add(PARAMETERS, 'chunk_size', 1, 128, 1).name('Chunk Size').onFinishChange(unloadAllLoadedChunks)
-controlsFolder.add(PARAMETERS, 'max_num_chunks', 1, 128, 1).name('Maximum Number of Chunks').onFinishChange(unloadAllLoadedChunks)
+controlsFolder.add(PARAMETERS, 'chunk_size', 2, 128, 1).name('Chunk Size').onFinishChange(unloadAllLoadedChunks)
+controlsFolder.add(PARAMETERS, 'max_num_chunks', 40, 128, 1).name('Maximum Number of Chunks').onFinishChange(unloadAllLoadedChunks)
 controlsFolder.add(PARAMETERS, 'gravity', 1, 100, 1).name('Gravity')
 
 const hudFolder = gui.addFolder('HUD')
