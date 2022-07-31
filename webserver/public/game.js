@@ -6,6 +6,10 @@ const PARAMETERS = {
   chunk_size: 96,
   max_num_chunks: 128,
   gravity: 70,
+  camera_position: '(0.0, 0.0, 0.0)',
+  num_of_loaded_chunks: 0,
+  mode: 'CREATIVE',
+  current_score: 0
 }
 
 const CHUNK_SCALE = 1
@@ -35,12 +39,7 @@ const loadedChunks = new Map() // to store currently loaded chunks
 // References
 const blocker = document.getElementById('blocker')
 const instructions = document.getElementById('instructions')
-const numOfLoadedChunksElement = document.getElementById('numOfLoadedChunks')
-const seedElement = document.getElementById('seed')
-const cameraPositionElement = document.getElementById('cameraPosition')
-const modeLabel = document.getElementById('mode')
 const currScore = 0
-const currScoreHTML = document.getElementById('currScoreHTML')
 
 /// ////////////////////////////////////////////////////////////////////////////
 // Set up renderer, scene and camera
@@ -180,10 +179,10 @@ function toggleCreativeMode () {
     playerOnFloor = true
     playerVelocity.y = 0
     playerPosition.y = PLAYER_INIT_HEIGHT
-    modeLabel.innerText = 'mode=CREATIVE'
+    PARAMETERS.mode = 'CREATIVE'
   } else {
     CREATIVE_MODE = false
-    modeLabel.innerText = 'mode=SURVIVAL'
+    PARAMETERS.mode = 'SURVIVAL'
   }
 }
 
@@ -220,8 +219,7 @@ init()
 
 function init () {
   stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
-  seedElement.innerText = `seed=${PARAMETERS.world_seed}`
-  modeLabel.innerText = CREATIVE_MODE ? 'mode=CREATIVE' : 'mode=SURVIVAL'
+  PARAMETERS.mode = CREATIVE_MODE ? 'CREATIVE' : 'SURVIVAL'
   document.body.appendChild(stats.dom)
 
   renderer.setPixelRatio(window.devicePixelRatio)
@@ -312,14 +310,14 @@ function makeChunk (chunk, x0, z0) {
   chunk.geometry.attributes.uv.needsUpdate = true
 }
 
-function unloadChunk(chunkName) {
+function unloadChunk (chunkName) {
   const chunk = loadedChunks.get(chunkName)
   chunk.geometry.dispose()
   scene.remove(chunk)
   loadedChunks.delete(chunkName)
 }
 
-function unloadAllLoadedChunks() {
+function unloadAllLoadedChunks () {
   for (const chunkName of loadedChunks.keys()) {
     unloadChunk(chunkName)
   }
@@ -328,12 +326,23 @@ function unloadAllLoadedChunks() {
 /// ////////////////////////////////////////////////////////////////////////////
 // GUI
 
-const gui = new lil.GUI()
+const gui = new lil.GUI({ width: 400 })
 
-gui.add(PARAMETERS, 'world_seed', Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER, 1).name("World Seed").onChange(unloadAllLoadedChunks)
-gui.add(PARAMETERS, 'chunk_size', 1, 128, 1).name("Chunk Size").onChange(unloadAllLoadedChunks)
-gui.add(PARAMETERS, 'max_num_chunks', 1, 128, 1).name("Max Num of Chunks").onChange(unloadAllLoadedChunks)
-gui.add(PARAMETERS, 'gravity', 1, 100, 1).name("Gravity")
+gui.title('Terrain Game Tech Test')
+
+const controlsFolder = gui.addFolder('Controls')
+
+controlsFolder.add(PARAMETERS, 'world_seed', Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER, 1).name('World Seed').onFinishChange(unloadAllLoadedChunks)
+controlsFolder.add(PARAMETERS, 'chunk_size', 1, 128, 1).name('Chunk Size').onFinishChange(unloadAllLoadedChunks)
+controlsFolder.add(PARAMETERS, 'max_num_chunks', 1, 128, 1).name('Maximum Number of Chunks').onFinishChange(unloadAllLoadedChunks)
+controlsFolder.add(PARAMETERS, 'gravity', 1, 100, 1).name('Gravity')
+
+const hudFolder = gui.addFolder('HUD')
+
+hudFolder.add(PARAMETERS, 'camera_position').name('Camera Position').listen().disable()
+hudFolder.add(PARAMETERS, 'num_of_loaded_chunks').name('Number of Loaded Chunks').listen().disable()
+hudFolder.add(PARAMETERS, 'mode').name('Mode').listen().disable()
+hudFolder.add(PARAMETERS, 'current_score').name('Current Score').listen().disable()
 
 /// ////////////////////////////////////////////////////////////////////////////
 // Animate
@@ -354,7 +363,7 @@ loader.load('assets/models/gltf/well.gltf.glb',
     console.log((xhr.loaded / xhr.total * 100) + '% loaded')
   },
   function (error) {
-    console.log('An error happened')
+    console.log('An error happened:', error)
   }
 )
 
@@ -370,13 +379,13 @@ function animate () {
       updatePlayer(deltaTime)
 
       // update position on FE
-      cameraPositionElement.innerText = `pos=(${playerPosition.x.toFixed(1)},${playerPosition.y.toFixed(1)},${playerPosition.z.toFixed(1)})`
+      PARAMETERS.camera_position = `(${playerPosition.x.toFixed(1)}, ${playerPosition.y.toFixed(1)}, ${playerPosition.z.toFixed(1)})`
 
-      // // update score board on FE
-      // currScoreHTML.innerText = currScore
+      // update score board on FE
+      PARAMETERS.current_score = currScore
     }
 
-    numOfLoadedChunksElement.innerText = `chunks_loaded=${loadedChunks.size}`
+    PARAMETERS.num_of_loaded_chunks = loadedChunks.size
   }
 
   const chunkX = Math.floor(camera.position.x / PARAMETERS.chunk_size + 0.5)
@@ -414,7 +423,7 @@ function animate () {
         gencount++
 
         let tree
-        let treeSrc = treeSrcArray[Math.floor(Math.random()*treeSrcArray.length)]
+        const treeSrc = treeSrcArray[Math.floor(Math.random() * treeSrcArray.length)]
         loader.load(treeSrc,
           function (gltf) {
             tree = gltf.scene
@@ -427,13 +436,12 @@ function animate () {
             if (chunk.position.z > 0) {
               scene.add(tree)
             }
-
           },
           function (xhr) {
             console.log((xhr.loaded / xhr.total * 100) + '% loaded')
           },
           function (error) {
-            console.log('An error happened')
+            console.log('An error happened:', error)
           }
         )
       }
