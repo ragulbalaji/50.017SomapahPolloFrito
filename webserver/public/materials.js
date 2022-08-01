@@ -2,7 +2,7 @@ const phongMaterial = new THREE.MeshPhongMaterial({
   color: 0xfdfbd3,
   shininess: 10,
   flatShading: true,
-  map: TEXTURES.tex_HandM
+  map: TEXTURES["Biome Texture"]
 })
 
 phongMaterial.onBeforeCompile = function (materialInfo) {
@@ -62,7 +62,7 @@ const shaderMaterial = new THREE.ShaderMaterial({
   }`,
   uniforms: {
     uTexture: {
-      value: TEXTURES.tex_grass
+      value: TEXTURES["Grass Texture"]
     }
   }
 })
