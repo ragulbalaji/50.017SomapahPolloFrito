@@ -265,6 +265,8 @@ function makeChunk (chunk, x0, z0) {
   z0 += 6969
   const vertices = chunk.geometry.attributes.position.array
   const uv = chunk.geometry.attributes.uv.array
+  const trees = []
+
   maxh = 8
   noise.seed(WORLD_SEED)
   for (let y = 0; y < CHUNK_SIZE; y++) {
@@ -357,7 +359,7 @@ function animate () {
 
   const chunkX = Math.floor(camera.position.x / CHUNK_SIZE + 0.5)
   const chunkZ = Math.floor(camera.position.z / CHUNK_SIZE + 0.5)
-  let gencount = 0
+  let gencount = 0, instancedMeshCount = 0
   for (let xoffset = -2; xoffset <= 2 && gencount < 1; xoffset++) {
     for (let zoffset = -2; zoffset <= 2 && gencount < 1; zoffset++) {
       const chunkXX = chunkX + xoffset
@@ -392,30 +394,21 @@ function animate () {
         let treeSrc = treeSrcArray[Math.floor(Math.random()*treeSrcArray.length)]
         loader.load(treeSrc,
           function (gltf) {
-            tree = gltf.scene
-            let pos = 1, count = 1;
+            let instancedMesh = null
+            gltf.scene.traverse( function (child) {
 
-            for (let i = 0; i < CHUNK_SIZE; i++) {
-              console.log(chunk.geometry.attributes.position.array[i])
-              pos += chunk.geometry.attributes.position.array[i]
-              count++;
-            }
-            tree.position.x = pos / count
-            tree.position.z = pos / count
-            tree.position.x *= (Math.random() * (1.5 - 0.5) + 0.5)
-            tree.position.z *= (Math.random() * (1.5 - 0.5) + 0.5)
-            tree.scale.set(8, 8, 8)
-            
-          
-            if (chunk.position.z > 0) {
-              scene.add(tree)
-              let treeName = `${tree.position.x}$$${tree.position.z}`
-              loadedTrees.set(treeName, tree)
-            }
+              if (child.isMesh) {
+                instancedMesh = new THREE.InstancedMesh(child.geometry, child.material, 1);
+                instancedMesh.setMatrixAt(instancedMeshCount++, new THREE.Object3D().matrix);
+                instancedMesh.scale.set(8, 8, 8)
+                console.log(instancedMesh)
+              }
+      
+            })
 
           },
           function (xhr) {
-            console.log((xhr.loaded / xhr.total * 100) + '% loaded')
+            console.log("Tree instance mesh " + (xhr.loaded / xhr.total * 100) + '% loaded')
           },
           function (error) {
             console.log('An error happened')
@@ -442,21 +435,21 @@ function animate () {
     }
   }
 
-  if (loadedTrees.size > 100) {
-    const treeNames = Array.from(loadedTrees.keys())
-    treeNames.sort((a ,b) => {
-      const aDist = loadedTrees.get(a).position.distanceTo(playerPosition)
-      const bDist = loadedTrees.get(b).position.distanceTo(playerPosition)
-      return bDist - aDist
-    })
-    for (let i = 0; i < treeNames.length - MAX_NUM_CHUNKS * 0.8; i++) {
-      const outOfMemTree = treeNames[i]
-      const removedTree = loadedChunks.get(outOfMemTree)
-      // removedTree.geometry.dispose()
-      scene.remove(removedTree)
-      loadedChunks.delete(removedTree)
-    }
-  }
+  // if (loadedTrees.size > 100) {
+  //   const treeNames = Array.from(loadedTrees.keys())
+  //   treeNames.sort((a ,b) => {
+  //     const aDist = loadedTrees.get(a).position.distanceTo(playerPosition)
+  //     const bDist = loadedTrees.get(b).position.distanceTo(playerPosition)
+  //     return bDist - aDist
+  //   })
+  //   for (let i = 0; i < treeNames.length - MAX_NUM_CHUNKS * 0.8; i++) {
+  //     const outOfMemTree = treeNames[i]
+  //     const removedTree = loadedChunks.get(outOfMemTree)
+  //     // removedTree.geometry.dispose()
+  //     scene.remove(removedTree)
+  //     loadedChunks.delete(removedTree)
+  //   }
+  // }
 
   renderer.render(scene, camera)
 
