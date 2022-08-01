@@ -6,8 +6,11 @@ const PARAMETERS = {
   chunk_size: 96,
   max_num_chunks: 128,
   gen_depth: 2,
-  chunk_material: MATERIALS.phongMaterial,
+  chunk_material: "Phong Material",
   gravity: 70,
+}
+
+const HUD = {
   camera_position: '(0.0, 0.0, 0.0)',
   num_of_loaded_chunks: 0,
   mode: 'CREATIVE',
@@ -181,10 +184,10 @@ function toggleCreativeMode () {
     playerOnFloor = true
     playerVelocity.y = 0
     playerPosition.y = PLAYER_INIT_HEIGHT
-    PARAMETERS.mode = 'CREATIVE'
+    HUD.mode = 'CREATIVE'
   } else {
     CREATIVE_MODE = false
-    PARAMETERS.mode = 'SURVIVAL'
+    HUD.mode = 'SURVIVAL'
   }
 }
 
@@ -221,7 +224,7 @@ init()
 
 function init () {
   stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
-  PARAMETERS.mode = CREATIVE_MODE ? 'CREATIVE' : 'SURVIVAL'
+  HUD.mode = CREATIVE_MODE ? 'CREATIVE' : 'SURVIVAL'
   document.body.appendChild(stats.dom)
 
   renderer.setPixelRatio(window.devicePixelRatio)
@@ -338,15 +341,15 @@ controlsFolder.add(PARAMETERS, 'world_seed', Number.MIN_SAFE_INTEGER, Number.MAX
 controlsFolder.add(PARAMETERS, 'chunk_size', 16, 256, 1).name('Chunk Size').onFinishChange(unloadAllLoadedChunks)
 controlsFolder.add(PARAMETERS, 'max_num_chunks', 81, 512, 1).name('Maximum Number of Chunks').onFinishChange(unloadAllLoadedChunks)
 controlsFolder.add(PARAMETERS, 'gen_depth', 1, 4, 1).name('Generate Depth').onFinishChange(unloadAllLoadedChunks)
-controlsFolder.add(PARAMETERS, 'chunk_material', Object.values(MATERIALS)).name('Chunk Material').onFinishChange(unloadAllLoadedChunks)
+controlsFolder.add(PARAMETERS, 'chunk_material', Object.keys(MATERIALS)).name('Chunk Material').onFinishChange(unloadAllLoadedChunks)
 controlsFolder.add(PARAMETERS, 'gravity', 1, 100, 1).name('Gravity')
 
 const hudFolder = gui.addFolder('HUD')
 
-hudFolder.add(PARAMETERS, 'camera_position').name('Camera Position').listen().disable()
-hudFolder.add(PARAMETERS, 'num_of_loaded_chunks').name('Number of Loaded Chunks').listen().disable()
-hudFolder.add(PARAMETERS, 'mode').name('Mode').listen().disable()
-hudFolder.add(PARAMETERS, 'current_score').name('Current Score').listen().disable()
+hudFolder.add(HUD, 'camera_position').name('Camera Position').listen().disable()
+hudFolder.add(HUD, 'num_of_loaded_chunks').name('Number of Loaded Chunks').listen().disable()
+hudFolder.add(HUD, 'mode').name('Mode').listen().disable()
+hudFolder.add(HUD, 'current_score').name('Current Score').listen().disable()
 
 /// ////////////////////////////////////////////////////////////////////////////
 // Animate
@@ -383,13 +386,13 @@ function animate () {
       updatePlayer(deltaTime)
 
       // update position on FE
-      PARAMETERS.camera_position = `(${playerPosition.x.toFixed(1)}, ${playerPosition.y.toFixed(1)}, ${playerPosition.z.toFixed(1)})`
+      HUD.camera_position = `(${playerPosition.x.toFixed(1)}, ${playerPosition.y.toFixed(1)}, ${playerPosition.z.toFixed(1)})`
 
       // update score board on FE
-      PARAMETERS.current_score = currScore
+      HUD.current_score = currScore
     }
 
-    PARAMETERS.num_of_loaded_chunks = loadedChunks.size
+    HUD.num_of_loaded_chunks = loadedChunks.size
   }
 
   const chunkX = Math.floor(camera.position.x / PARAMETERS.chunk_size + 0.5)
@@ -411,7 +414,7 @@ function animate () {
         )
         geometry.rotateX(-Math.PI / 2)
 
-        const chunk = new THREE.Mesh(geometry, PARAMETERS.chunk_material)
+        const chunk = new THREE.Mesh(geometry, MATERIALS[PARAMETERS.chunk_material])
         chunk.receiveShadow = true
         scene.add(chunk)
 
