@@ -10,6 +10,18 @@ const PARAMETERS = {
   gravity: 70,
 }
 
+const MATERIAL_PARAMETERS = {
+  "Phong Material": {
+    color: 0xfdfbd3,
+    shininess: 10,
+    flatShading: true,
+    map: TEXTURES.tex_HandM
+  },
+  "Wireframe Material": {
+    color: 0x000000,
+  }
+}
+
 const HUD = {
   camera_position: '(0.0, 0.0, 0.0)',
   num_of_loaded_chunks: 0,
@@ -337,11 +349,48 @@ gui.title('Terrain Game Tech Test')
 
 const controlsFolder = gui.addFolder('Controls')
 
+let materialSpecificParamsFolder = gui.addFolder('Material Parameters')
+
+function handleMaterialSpecificControllers(materialName) {
+  for (const materialParams in MATERIAL_PARAMETERS[materialName]) {
+    if (materialParams === "color") {
+      materialSpecificParamsFolder.addColor(MATERIAL_PARAMETERS[materialName], materialParams).name("Color").onFinishChange(function(value) {
+        unloadAllLoadedChunks()
+        MATERIALS[materialName].color.setHex(value)
+      })
+    } else if (materialParams === "shininess") {
+      materialSpecificParamsFolder.add(MATERIAL_PARAMETERS[materialName], materialParams, 0, 100, 0.1).name("Shininess").onFinishChange(function(value) {
+        unloadAllLoadedChunks()
+        MATERIALS[materialName].shininess = value
+      })
+    } else if (materialParams === "flatShading") {
+      materialSpecificParamsFolder.add(MATERIAL_PARAMETERS[materialName], materialParams).name("Flat Shading").onFinishChange(function(value) {
+        unloadAllLoadedChunks()
+        MATERIALS[materialName].flatShading = value
+      })
+    } else if (materialParams === "map") {
+      materialSpecificParamsFolder.add(MATERIAL_PARAMETERS[materialName], materialParams, Object.keys(TEXTURES)).name("Texture Map").onFinishChange(function(value) {
+        unloadAllLoadedChunks()
+        MATERIALS[materialName].map = TEXTURES[value]
+      })
+    }
+  }
+}
+
+handleMaterialSpecificControllers(PARAMETERS["chunk_material"])
+
 controlsFolder.add(PARAMETERS, 'world_seed', Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER, 1).name('World Seed').onFinishChange(unloadAllLoadedChunks)
 controlsFolder.add(PARAMETERS, 'chunk_size', 16, 256, 1).name('Chunk Size').onFinishChange(unloadAllLoadedChunks)
 controlsFolder.add(PARAMETERS, 'max_num_chunks', 81, 512, 1).name('Maximum Number of Chunks').onFinishChange(unloadAllLoadedChunks)
 controlsFolder.add(PARAMETERS, 'gen_depth', 1, 4, 1).name('Generate Depth').onFinishChange(unloadAllLoadedChunks)
-controlsFolder.add(PARAMETERS, 'chunk_material', Object.keys(MATERIALS)).name('Chunk Material').onFinishChange(unloadAllLoadedChunks)
+controlsFolder.add(PARAMETERS, 'chunk_material', Object.keys(MATERIALS)).name('Chunk Material').onFinishChange(
+  function(materialName) {
+    unloadAllLoadedChunks()
+    materialSpecificParamsFolder.destroy()
+    materialSpecificParamsFolder = gui.addFolder('Material Parameters')
+    handleMaterialSpecificControllers(materialName)
+  }
+)
 controlsFolder.add(PARAMETERS, 'gravity', 1, 100, 1).name('Gravity')
 
 const hudFolder = gui.addFolder('HUD')
