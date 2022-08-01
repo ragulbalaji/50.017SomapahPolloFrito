@@ -2,7 +2,7 @@ const phongMaterial = new THREE.MeshPhongMaterial({
   color: 0xfdfbd3,
   shininess: 10,
   flatShading: true,
-  map: TEXTURES["Biome Texture"]
+  map: TEXTURES['Biome Texture']
 })
 
 phongMaterial.onBeforeCompile = function (materialInfo) {
@@ -62,7 +62,7 @@ const shaderMaterial = new THREE.ShaderMaterial({
   }`,
   uniforms: {
     uTexture: {
-      value: TEXTURES["Grass Texture"]
+      value: TEXTURES['Grass Texture']
     }
   }
 })
@@ -72,8 +72,8 @@ const normalMaterial = new THREE.MeshNormalMaterial({ flatShading: true })
 const wireframeMaterial = new THREE.MeshStandardMaterial({ color: 0x000000, wireframe: true })
 
 const MATERIALS = {
-  "Phong Material": phongMaterial,
-  "Shader Material": shaderMaterial,
-  "Normal Material": normalMaterial,
-  "Wireframe Material": wireframeMaterial
+  'Phong Material': phongMaterial,
+  'Shader Material': shaderMaterial,
+  'Normal Material': normalMaterial,
+  'Wireframe Material': wireframeMaterial
 }

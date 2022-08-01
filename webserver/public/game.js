@@ -6,18 +6,18 @@ const PARAMETERS = {
   chunk_size: 96,
   max_num_chunks: 128,
   gen_depth: 2,
-  chunk_material: "Phong Material",
-  gravity: 70,
+  chunk_material: 'Phong Material',
+  gravity: 70
 }
 
 const MATERIAL_PARAMETERS = {
-  "Phong Material": {
+  'Phong Material': {
     color: 0xfdfbd3,
     shininess: 10,
-    map: "Biome Texture"
+    map: 'Biome Texture'
   },
-  "Wireframe Material": {
-    color: 0x000000,
+  'Wireframe Material': {
+    color: 0x000000
   }
 }
 
@@ -350,20 +350,20 @@ const controlsFolder = gui.addFolder('Controls')
 
 let materialSpecificParamsFolder
 
-function handleMaterialSpecificControllers(materialName) {
+function handleMaterialSpecificControllers (materialName) {
   for (const materialParams in MATERIAL_PARAMETERS[materialName]) {
-    if (materialParams === "color") {
-      materialSpecificParamsFolder.addColor(MATERIAL_PARAMETERS[materialName], materialParams).name("Color").onFinishChange(function(value) {
+    if (materialParams === 'color') {
+      materialSpecificParamsFolder.addColor(MATERIAL_PARAMETERS[materialName], materialParams).name('Color').onFinishChange(function (value) {
         unloadAllLoadedChunks()
         MATERIALS[materialName].color.setHex(value)
       })
-    } else if (materialParams === "shininess") {
-      materialSpecificParamsFolder.add(MATERIAL_PARAMETERS[materialName], materialParams, 0, 100, 0.1).name("Shininess").onFinishChange(function(value) {
+    } else if (materialParams === 'shininess') {
+      materialSpecificParamsFolder.add(MATERIAL_PARAMETERS[materialName], materialParams, 0, 100, 0.1).name('Shininess').onFinishChange(function (value) {
         unloadAllLoadedChunks()
         MATERIALS[materialName].shininess = value
       })
-    } else if (materialParams === "map") {
-      materialSpecificParamsFolder.add(MATERIAL_PARAMETERS[materialName], materialParams, Object.keys(TEXTURES)).name("Texture Map").onFinishChange(function(value) {
+    } else if (materialParams === 'map') {
+      materialSpecificParamsFolder.add(MATERIAL_PARAMETERS[materialName], materialParams, Object.keys(TEXTURES)).name('Texture Map').onFinishChange(function (value) {
         unloadAllLoadedChunks()
         MATERIALS[materialName].map = TEXTURES[value]
       })
@@ -376,7 +376,7 @@ controlsFolder.add(PARAMETERS, 'chunk_size', 16, 256, 1).name('Chunk Size').onFi
 controlsFolder.add(PARAMETERS, 'max_num_chunks', 81, 512, 1).name('Maximum Number of Chunks').onFinishChange(unloadAllLoadedChunks)
 controlsFolder.add(PARAMETERS, 'gen_depth', 1, 4, 1).name('Generate Depth').onFinishChange(unloadAllLoadedChunks)
 controlsFolder.add(PARAMETERS, 'chunk_material', Object.keys(MATERIALS)).name('Chunk Material').onFinishChange(
-  function(materialName) {
+  function (materialName) {
     unloadAllLoadedChunks()
     if (materialSpecificParamsFolder != null) {
       materialSpecificParamsFolder.destroy()
@@ -395,7 +395,7 @@ hudFolder.add(HUD, 'mode').name('Mode').listen().disable()
 hudFolder.add(HUD, 'current_score').name('Current Score').listen().disable()
 
 materialSpecificParamsFolder = gui.addFolder('Material Parameters')
-handleMaterialSpecificControllers(PARAMETERS["chunk_material"])
+handleMaterialSpecificControllers(PARAMETERS.chunk_material)
 
 /// ////////////////////////////////////////////////////////////////////////////
 // Animate
