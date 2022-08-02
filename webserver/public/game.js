@@ -2,6 +2,7 @@
 // Constants
 
 const PARAMETERS = {
+  world_seed: Math.round(Math.random() * 4206969),
   chunk_size: 96,
   max_num_chunks: 128,
   gen_depth: 2,
