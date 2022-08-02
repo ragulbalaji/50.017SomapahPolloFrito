@@ -2,7 +2,6 @@
 // Constants
 
 const PARAMETERS = {
-  world_seed: 1925401, // Math.round(Math.random() * 4206969)
   chunk_size: 96,
   max_num_chunks: 128,
   gen_depth: 2,
@@ -33,7 +32,7 @@ const STEPS_PER_FRAME = 3
 const POINTER_SPEED = 2
 const _PI_2 = Math.PI / 2
 const PLAYER_INIT_HEIGHT = 64
-const PLAYER_HEIGHT = 20
+const PLAYER_HEIGHT = 2
 const PLAYER_SPEED_GROUND = 60
 const PLAYER_SPEED_AIR = 30
 const CREATIVE_SPEED_FACTOR = 20
