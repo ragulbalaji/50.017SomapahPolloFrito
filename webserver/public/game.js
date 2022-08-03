@@ -319,6 +319,8 @@ directionalLight.position.set(100, 100, 0)
 scene.add(directionalLight)
 
 let iiii = 0
+let jjjj = 0
+let kkkk = 0
 function makeChunk (chunk, x0, z0) {
   x0 += 6969
   z0 += 6969
@@ -363,19 +365,34 @@ function makeChunk (chunk, x0, z0) {
         uv[j + 1] = 1
       }
 
-      if (vertices[i + 1] > 5 && vertices[i + 1] < 40 && temp > 0.7 && rain < 0.7 && noise.perlin2((x0 + x), (z0 + y)) > 0.7) {
+      if (vertices[i + 1] > 5 && vertices[i + 1] < 40 && temp > 0.34 && rain < 0.67 && noise.perlin2((x0 + x), (z0 + y)) > 0.7) {
         dummy.position.set((vertices[i] + chunk.position.x) / 8, vertices[i + 1] / 8, (vertices[i + 2] + chunk.position.z) / 8)
         dummy.rotation.set(0, noise.perlin2((x0 + x) * 123, (z0 + y) * 123) * Math.PI * 2, 0)
         dummy.updateMatrix()
-        ALL_INSTANCED_MODELS[1][0].setMatrixAt(iiii, dummy.matrix)
-        ALL_INSTANCED_MODELS[1][1].setMatrixAt(iiii, dummy.matrix)
-        iiii = (iiii + 1) % 2000
+        const treechoice = noise.perlin2((x0 + x) * 4242, (z0 + y) * 6969)
+        if (treechoice < 0) {
+          ALL_INSTANCED_MODELS[0][0].setMatrixAt(iiii, dummy.matrix)
+          ALL_INSTANCED_MODELS[0][1].setMatrixAt(iiii, dummy.matrix)
+          iiii = (iiii + 1) % 2000
+        } else if (treechoice > 0.4) {
+          ALL_INSTANCED_MODELS[2][0].setMatrixAt(jjjj, dummy.matrix)
+          ALL_INSTANCED_MODELS[2][1].setMatrixAt(jjjj, dummy.matrix)
+          jjjj = (jjjj + 1) % 2000
+        } else {
+          ALL_INSTANCED_MODELS[1][0].setMatrixAt(kkkk, dummy.matrix)
+          ALL_INSTANCED_MODELS[1][1].setMatrixAt(kkkk, dummy.matrix)
+          kkkk = (kkkk + 1) % 2000
+        }
       }
     }
   }
 
+  ALL_INSTANCED_MODELS[0][0].instanceMatrix.needsUpdate = true
+  ALL_INSTANCED_MODELS[0][1].instanceMatrix.needsUpdate = true
   ALL_INSTANCED_MODELS[1][0].instanceMatrix.needsUpdate = true
   ALL_INSTANCED_MODELS[1][1].instanceMatrix.needsUpdate = true
+  ALL_INSTANCED_MODELS[2][0].instanceMatrix.needsUpdate = true
+  ALL_INSTANCED_MODELS[2][1].instanceMatrix.needsUpdate = true
   chunk.geometry.attributes.position.needsUpdate = true
   chunk.geometry.attributes.uv.needsUpdate = true
 }
