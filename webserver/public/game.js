@@ -481,13 +481,13 @@ function animate () {
   requestAnimationFrame(animate)
 }
 
-function wait_for_takeoff () {
+function waitForTakeoff () {
   if (loadedAssets >= ALL_LOADED_COUNT) {
     document.getElementById('title').innerText = 'Click to Focus!'
     animate()
   } else {
     console.log('Still waiting for resources to load...')
-    setTimeout(wait_for_takeoff, 200)
+    setTimeout(waitForTakeoff, 200)
   }
 }
-wait_for_takeoff()
+waitForTakeoff()
