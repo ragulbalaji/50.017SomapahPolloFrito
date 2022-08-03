@@ -87,7 +87,7 @@ camera.rotation.order = 'YXZ'
 camera.position.x = playerPosition.x
 camera.position.y = playerPosition.y
 camera.position.z = playerPosition.z
-camera.lookAt(16, 0, 0)
+camera.lookAt(128, 0, 0)
 
 const stats = new Stats()
 const rayCaster = new THREE.Raycaster()
@@ -241,7 +241,7 @@ function init () {
   HUD.mode = CREATIVE_MODE ? 'CREATIVE' : 'SURVIVAL'
   document.body.appendChild(stats.dom)
 
-  renderer.setPixelRatio(window.devicePixelRatio)
+  renderer.setPixelRatio(window.devicePixelRatio || 1)
   renderer.setSize(window.innerWidth, window.innerHeight)
   document.body.appendChild(renderer.domElement)
 
