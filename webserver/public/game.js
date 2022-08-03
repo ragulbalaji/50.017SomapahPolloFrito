@@ -57,6 +57,9 @@ const blocker = document.getElementById('blocker')
 const instructions = document.getElementById('instructions')
 const currScore = 0
 
+let loadedAssets = 0
+const ALL_LOADED_COUNT = 0
+
 /// ////////////////////////////////////////////////////////////////////////////
 // Set up renderer, scene and camera
 
@@ -84,7 +87,7 @@ camera.rotation.order = 'YXZ'
 camera.position.x = playerPosition.x
 camera.position.y = playerPosition.y
 camera.position.z = playerPosition.z
-camera.lookAt(16, 0, 0)
+camera.lookAt(128, 0, 0)
 
 const stats = new Stats()
 const rayCaster = new THREE.Raycaster()
@@ -238,7 +241,7 @@ function init () {
   HUD.mode = CREATIVE_MODE ? 'CREATIVE' : 'SURVIVAL'
   document.body.appendChild(stats.dom)
 
-  renderer.setPixelRatio(window.devicePixelRatio)
+  renderer.setPixelRatio(window.devicePixelRatio || 1)
   renderer.setSize(window.innerWidth, window.innerHeight)
   document.body.appendChild(renderer.domElement)
 
@@ -344,7 +347,8 @@ function unloadAllLoadedChunks () {
 
 const gui = new lil.GUI({ width: 400 })
 
-gui.title('Terrain Game Tech Test')
+gui.title('Somapah Worldscapes Debug Menu')
+gui.close() // Default closed to save screen space
 
 const controlsFolder = gui.addFolder('Controls')
 
@@ -400,28 +404,6 @@ handleMaterialSpecificControllers(PARAMETERS.chunk_material)
 /// ////////////////////////////////////////////////////////////////////////////
 // Animate
 
-const loader = new THREE.GLTFLoader()
-loader.load('assets/models/gltf/well.gltf.glb',
-  function (gltf) {
-    gltf.scene.scale.set(8, 8, 8)
-    scene.add(gltf.scene)
-
-    // gltf.animations; // Array<THREE.AnimationClip>
-    // gltf.scene; // THREE.Group
-    // gltf.scenes; // Array<THREE.Group>
-    // gltf.cameras; // Array<THREE.Camera>
-    // gltf.asset; // Object
-  },
-  function (xhr) {
-    console.log((xhr.loaded / xhr.total * 100) + '% loaded')
-  },
-  function (error) {
-    console.log('An error happened:', error)
-  }
-)
-
-const treeSrcArray = ['assets/models/gltf/detail_treeA.gltf.glb', 'assets/models/gltf/detail_treeB.gltf.glb', 'assets/models/gltf/detail_treeC.gltf.glb']
-
 function animate () {
   // Prevent user from moving when the pointer is not locked
   if (pointerLocked) {
@@ -474,29 +456,6 @@ function animate () {
 
         loadedChunks.set(chunkName, chunk)
         gencount++
-
-        let tree
-        const treeSrc = treeSrcArray[Math.floor(Math.random() * treeSrcArray.length)]
-        loader.load(treeSrc,
-          function (gltf) {
-            tree = gltf.scene
-            tree.position.x = chunk.position.x
-            tree.position.z = chunk.position.z
-            tree.position.x *= (Math.random() * (1.5 - 0.5) + 0.5)
-            tree.position.z *= (Math.random() * (1.5 - 0.5) + 0.5)
-            tree.scale.set(8, 8, 8)
-
-            if (chunk.position.z > 0) {
-              scene.add(tree)
-            }
-          },
-          function (xhr) {
-            console.log((xhr.loaded / xhr.total * 100) + '% loaded')
-          },
-          function (error) {
-            console.log('An error happened:', error)
-          }
-        )
       }
     }
   }
@@ -522,4 +481,12 @@ function animate () {
   requestAnimationFrame(animate)
 }
 
-animate()
+function wait_for_takeoff () {
+  if (loadedAssets == ALL_LOADED_COUNT) {
+    animate()
+  } else {
+    console.log('Still waiting for resources to load...')
+    setTimeout(wait_for_takeoff, 200)
+  }
+}
+wait_for_takeoff()
