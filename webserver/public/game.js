@@ -347,7 +347,8 @@ function unloadAllLoadedChunks () {
 
 const gui = new lil.GUI({ width: 400 })
 
-gui.title('Terrain Game Tech Test')
+gui.title('Somapah Worldscapes Debug Menu')
+gui.close() // Default closed to save screen space
 
 const controlsFolder = gui.addFolder('Controls')
 
