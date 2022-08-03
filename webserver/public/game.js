@@ -57,8 +57,45 @@ const blocker = document.getElementById('blocker')
 const instructions = document.getElementById('instructions')
 const currScore = 0
 
+const ALL_INSTANCED_MODELS = []
+const loader = new THREE.GLTFLoader()
+function loadInstancesOf (idx, GLTFpath, count) {
+  loader.load(GLTFpath,
+    function (gltf) {
+      ALL_INSTANCED_MODELS[idx] = []
+      gltf.scene.traverse(function (child) {
+        if (child.isMesh) {
+          const instancedMesh = new THREE.InstancedMesh(child.geometry, child.material, count)
+          instancedMesh.scale.set(8, 8, 8)
+          scene.add(instancedMesh)
+          ALL_INSTANCED_MODELS[idx].push(instancedMesh)
+        }
+      })
+      loadedAssets++
+    },
+    function (xhr) {
+      console.log((xhr.loaded / xhr.total * 100) + '% loaded --> ' + GLTFpath)
+    },
+    function (error) {
+      console.log('GLTFLoader error ' + error)
+    }
+  )
+}
+
+const MODELS = {
+  TREEA: [0, 'assets/models/gltf/detail_treeA.gltf.glb', 2000],
+  TREEB: [1, 'assets/models/gltf/detail_treeB.gltf.glb', 2000],
+  TREEC: [2, 'assets/models/gltf/detail_treeC.gltf.glb', 2000],
+  WELLS: [3, 'assets/models/gltf/well.gltf.glb', 200]
+}
+
 let loadedAssets = 0
-const ALL_LOADED_COUNT = 0
+const ALL_LOADED_COUNT = 4
+
+for (const MODEL of Object.keys(MODELS)) {
+  const toload = MODELS[MODEL]
+  loadInstancesOf(...toload)
+}
 
 /// ////////////////////////////////////////////////////////////////////////////
 // Set up renderer, scene and camera
