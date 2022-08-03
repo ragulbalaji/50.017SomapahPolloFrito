@@ -65,7 +65,9 @@ function loadInstancesOf (idx, GLTFpath, count) {
       ALL_INSTANCED_MODELS[idx] = []
       gltf.scene.traverse(function (child) {
         if (child.isMesh) {
-          const instancedMesh = new THREE.InstancedMesh(child.geometry, child.material, count)
+          const mat = child.material
+          mat.flatShading = true
+          const instancedMesh = new THREE.InstancedMesh(child.geometry, mat, count)
           instancedMesh.scale.set(8, 8, 8)
           scene.add(instancedMesh)
           ALL_INSTANCED_MODELS[idx].push(instancedMesh)
