@@ -246,7 +246,11 @@ function playerCollisions () {
   if (CREATIVE_MODE) return
 
   rayCaster.set(playerPosition, new THREE.Vector3(0, -1, 0))
-  const intersects = rayCaster.intersectObjects(scene.children)
+  // const intersects = rayCaster.intersectObjects(scene.children) // Too slow
+  const chunkX = Math.floor(camera.position.x / PARAMETERS.chunk_size + 0.5)
+  const chunkZ = Math.floor(camera.position.z / PARAMETERS.chunk_size + 0.5)
+  const chunkName = `${chunkX}$$${chunkZ}`
+  const intersects = rayCaster.intersectObjects([loadedChunks.get(chunkName)])
   if (intersects.length > 0) {
     if (intersects[0].distance < PLAYER_HEIGHT) {
       const normal = intersects[0].face.normal
