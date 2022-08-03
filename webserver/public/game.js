@@ -277,13 +277,11 @@ directionalLight.castShadow = true
 directionalLight.position.set(100, 100, 0)
 scene.add(directionalLight)
 
-let maxh = 0
 function makeChunk (chunk, x0, z0) {
   x0 += 6969
   z0 += 6969
   const vertices = chunk.geometry.attributes.position.array
   const uv = chunk.geometry.attributes.uv.array
-  maxh = 8
   noise.seed(PARAMETERS.world_seed)
   for (let y = 0; y < PARAMETERS.chunk_size; y++) {
     for (let x = 0; x < PARAMETERS.chunk_size; x++) {
@@ -321,7 +319,6 @@ function makeChunk (chunk, x0, z0) {
         uv[j] = 1
         uv[j + 1] = 1
       }
-      maxh = Math.max(maxh, vertices[i + 1])
     }
   }
 
