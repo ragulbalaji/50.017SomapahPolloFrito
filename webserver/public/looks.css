@@ -59,3 +59,12 @@ body {
     opacity: 0;
   }
 }
+
+.lil-gui {
+  --font-family: "SF Mono", monospace;
+  transition: width 300ms;
+}
+
+.lil-gui.closed {
+  width: 230px;
+}

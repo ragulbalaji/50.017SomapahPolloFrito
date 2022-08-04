@@ -415,7 +415,7 @@ function unloadAllLoadedChunks () {
 /// ////////////////////////////////////////////////////////////////////////////
 // GUI
 
-const gui = new lil.GUI({ width: 400 })
+const gui = new lil.GUI({ width: 390 })
 
 gui.title('Somapah Worldscapes Debug Menu')
 gui.close() // Default closed to save screen space
