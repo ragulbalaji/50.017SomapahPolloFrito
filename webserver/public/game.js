@@ -4,8 +4,8 @@
 const PARAMETERS = {
   world_seed: Math.round(Math.random() * 4206969),
   chunk_size: 96,
-  max_num_chunks: 128,
-  gen_depth: 2,
+  max_num_chunks: 150,
+  gen_depth: 3,
   chunk_material: 'Phong Material',
   gravity: 70,
   day_night_speed: 0.01,
@@ -487,8 +487,8 @@ function handleMaterialSpecificControllers (materialName) {
 
 controlsFolder.add(PARAMETERS, 'world_seed', Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER, 1).name('World Seed').onFinishChange(unloadAllLoadedChunks)
 controlsFolder.add(PARAMETERS, 'chunk_size', 16, 256, 1).name('Chunk Size').onFinishChange(unloadAllLoadedChunks)
-controlsFolder.add(PARAMETERS, 'max_num_chunks', 81, 512, 1).name('Maximum Number of Chunks').onFinishChange(unloadAllLoadedChunks)
-controlsFolder.add(PARAMETERS, 'gen_depth', 1, 4, 1).name('Generate Depth').onFinishChange(unloadAllLoadedChunks)
+controlsFolder.add(PARAMETERS, 'max_num_chunks', 81, 512, 1).name('Max. Number of Chunks').onFinishChange(unloadAllLoadedChunks)
+controlsFolder.add(PARAMETERS, 'gen_depth', 1, 4, 1).name('Generation Depth').onFinishChange(unloadAllLoadedChunks)
 controlsFolder.add(PARAMETERS, 'chunk_material', Object.keys(MATERIALS)).name('Chunk Material').onFinishChange(
   function (materialName) {
     unloadAllLoadedChunks()
