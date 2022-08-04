@@ -15,7 +15,8 @@ const PARAMETERS = {
   ambient_light_intensity: 0.5,
   directional_light_color: 0xfdfbd3,
   directional_light_intensity: 0.8,
-  directional_light_angle: 90
+  directional_light_angle: 90,
+  moon_light_intensity: 0.15
 }
 
 const MATERIAL_PARAMETERS = {
@@ -327,6 +328,10 @@ function init () {
 
 const ambientLight = new THREE.AmbientLight(PARAMETERS.ambient_light_color, PARAMETERS.ambient_light_intensity)
 scene.add(ambientLight)
+const moonLight = new THREE.DirectionalLight(PARAMETERS.directional_light_color, PARAMETERS.moon_light_intensity)
+moonLight.castShadow = true
+moonLight.position.set(100, 100, 0)
+scene.add(moonLight)
 const directionalLight = new THREE.DirectionalLight(PARAMETERS.directional_light_color, PARAMETERS.directional_light_intensity)
 directionalLight.castShadow = true
 directionalLight.position.set(100, 100, -100 / Math.tan(PARAMETERS.directional_light_angle * Math.PI / 180))
@@ -486,7 +491,7 @@ controlsFolder.add(PARAMETERS, 'chunk_material', Object.keys(MATERIALS)).name('C
 )
 controlsFolder.add(PARAMETERS, 'gravity', 1, 100, 1).name('Gravity')
 controlsFolder.add(PARAMETERS, 'day_night_speed', 0, 1, 0.01).name('Day-Night Cycle Speed')
-controlsFolder.addColor(PARAMETERS, 'sky_color').name('Sky Color').onChange(
+controlsFolder.addColor(PARAMETERS, 'sky_color').name('Base Sky Color').onChange(
   function (value) {
     scene.background = new THREE.Color(value)
     scene.fog = new THREE.FogExp2(value, PARAMETERS.fog_density)
@@ -514,6 +519,9 @@ lightsFolder.add(PARAMETERS, 'directional_light_intensity', 0, 1, 0.01).name('Di
 })
 lightsFolder.add(PARAMETERS, 'directional_light_angle', 0, 180, 0.01).name('Directional Angle').listen().onChange(function (value) {
   directionalLight.position.set(100, 100, -100 / Math.tan(value * Math.PI / 180))
+})
+lightsFolder.add(PARAMETERS, 'moon_light_intensity', 0, 1, 0.01).name('Moon Intensity').onChange(function (value) {
+  moonLight.intensity = value
 })
 
 const hudFolder = gui.addFolder('HUD')
@@ -544,6 +552,12 @@ function updateDayNight () {
   }
   PARAMETERS.directional_light_angle %= 180
   directionalLight.position.set(100, 100, -100 / Math.tan(PARAMETERS.directional_light_angle * Math.PI / 180))
+  const darkeningFactor = (-Math.sin(PARAMETERS.directional_light_angle * Math.PI / 180) + 1) * 100
+  const currentSkyColor = tinycolor('#' + PARAMETERS.sky_color.toString(16))
+  console.log(darkeningFactor)
+  const newSkyColor = parseInt(currentSkyColor.darken(darkeningFactor).toString().substring(1), 16)
+  scene.background = new THREE.Color(newSkyColor)
+  scene.fog = new THREE.FogExp2(newSkyColor, PARAMETERS.fog_density)
 }
 
 function animate () {
