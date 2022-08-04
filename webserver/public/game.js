@@ -346,6 +346,7 @@ function makeChunk (chunkName, chunk, x0, z0) {
   decorations[MODELS.TREEA[0]] = []
   decorations[MODELS.TREEB[0]] = []
   decorations[MODELS.TREEC[0]] = []
+  decorations[MODELS.WELLS[0]] = []
   noise.seed(PARAMETERS.world_seed)
   for (let y = 0; y < PARAMETERS.chunk_size; y++) {
     for (let x = 0; x < PARAMETERS.chunk_size; x++) {
@@ -382,6 +383,14 @@ function makeChunk (chunkName, chunk, x0, z0) {
         vertices[i + 1] *= 0.2
         uv[j] = 1
         uv[j + 1] = 1
+      }
+
+      if (vertices[i + 1] > 3 && temp < 0.1 && noise.perlin2((x0 + x), (z0 + y)) > 0.90) {
+        const tx = (vertices[i] + chunk.position.x) / 8
+        const ty = vertices[i + 1] / 8
+        const tz = (vertices[i + 2] + chunk.position.z) / 8
+        const troty = noise.perlin2((x0 + x) * 123, (z0 + y) * 123) * Math.PI * 2
+        decorations[MODELS.WELLS[0]].push([tx, ty, tz, troty])
       }
 
       if (vertices[i + 1] > 5 && vertices[i + 1] < 40 && temp > 0.34 && rain < 0.67 && noise.perlin2((x0 + x), (z0 + y)) > 0.7) {
