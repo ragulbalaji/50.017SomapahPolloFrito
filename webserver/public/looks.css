@@ -77,3 +77,23 @@ body {
 .lil-gui.root.closed {
   width: 230px;
 }
+
+/* unvisited link */
+a:link {
+  color: lightblue;
+}
+
+/* visited link */
+a:visited {
+  color: lightgrey;
+}
+
+/* mouse over link */
+a:hover {
+  color: hotpink;
+}
+
+/* selected link */
+a:active {
+  color: blue;
+}
