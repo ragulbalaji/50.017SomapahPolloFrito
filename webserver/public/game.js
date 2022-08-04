@@ -492,7 +492,7 @@ lightsFolder.addColor(PARAMETERS, 'directional_light_color').name('Directional C
 lightsFolder.add(PARAMETERS, 'directional_light_intensity', 0, 1, 0.01).name('Directional Intensity').onChange(function (value) {
   directionalLight.intensity = value
 })
-lightsFolder.add(PARAMETERS, 'directional_light_angle', 0, 180, 0.1).name('Directional Angle').listen().onChange(function (value) {
+lightsFolder.add(PARAMETERS, 'directional_light_angle', 0, 180, 0.01).name('Directional Angle').listen().onChange(function (value) {
   directionalLight.position.set(100, 100, -100 / Math.tan(value * Math.PI / 180))
 })
 
