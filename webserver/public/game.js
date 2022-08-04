@@ -443,18 +443,15 @@ let materialSpecificParamsFolder
 function handleMaterialSpecificControllers (materialName) {
   for (const materialParams in MATERIAL_PARAMETERS[materialName]) {
     if (materialParams === 'color') {
-      materialSpecificParamsFolder.addColor(MATERIAL_PARAMETERS[materialName], materialParams).name('Color').onFinishChange(function (value) {
-        unloadAllLoadedChunks()
+      materialSpecificParamsFolder.addColor(MATERIAL_PARAMETERS[materialName], materialParams).name('Color').onChange(function (value) {
         MATERIALS[materialName].color.setHex(value)
       })
     } else if (materialParams === 'shininess') {
-      materialSpecificParamsFolder.add(MATERIAL_PARAMETERS[materialName], materialParams, 0, 100, 0.1).name('Shininess').onFinishChange(function (value) {
-        unloadAllLoadedChunks()
+      materialSpecificParamsFolder.add(MATERIAL_PARAMETERS[materialName], materialParams, 0, 100, 0.1).name('Shininess').onChange(function (value) {
         MATERIALS[materialName].shininess = value
       })
     } else if (materialParams === 'map') {
-      materialSpecificParamsFolder.add(MATERIAL_PARAMETERS[materialName], materialParams, Object.keys(TEXTURES)).name('Texture Map').onFinishChange(function (value) {
-        unloadAllLoadedChunks()
+      materialSpecificParamsFolder.add(MATERIAL_PARAMETERS[materialName], materialParams, Object.keys(TEXTURES)).name('Texture Map').onChange(function (value) {
         MATERIALS[materialName].map = TEXTURES[value]
       })
     }
@@ -479,16 +476,16 @@ controlsFolder.add(PARAMETERS, 'gravity', 1, 100, 1).name('Gravity')
 
 const lightsFolder = gui.addFolder('Lights')
 
-lightsFolder.addColor(PARAMETERS, 'ambient_light_color').name('Ambient Color').onFinishChange(function (value) {
+lightsFolder.addColor(PARAMETERS, 'ambient_light_color').name('Ambient Color').onChange(function (value) {
   ambientLight.color.setHex(value)
 })
-lightsFolder.add(PARAMETERS, 'ambient_light_intensity', 0, 1, 0.01).name('Ambient Intensity').onFinishChange(function (value) {
+lightsFolder.add(PARAMETERS, 'ambient_light_intensity', 0, 1, 0.01).name('Ambient Intensity').onChange(function (value) {
   ambientLight.intensity = value
 })
-lightsFolder.addColor(PARAMETERS, 'directional_light_color').name('Directional Color').onFinishChange(function (value) {
+lightsFolder.addColor(PARAMETERS, 'directional_light_color').name('Directional Color').onChange(function (value) {
   directionalLight.color.setHex(value)
 })
-lightsFolder.add(PARAMETERS, 'directional_light_intensity', 0, 1, 0.01).name('Directional Intensity').onFinishChange(function (value) {
+lightsFolder.add(PARAMETERS, 'directional_light_intensity', 0, 1, 0.01).name('Directional Intensity').onChange(function (value) {
   directionalLight.intensity = value
 })
 
