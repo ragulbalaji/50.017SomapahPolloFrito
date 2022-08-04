@@ -98,7 +98,8 @@ const MODELS = {
   TREEA: [0, 'assets/models/gltf/detail_treeA.gltf.glb', 15000],
   TREEB: [1, 'assets/models/gltf/detail_treeB.gltf.glb', 15000],
   TREEC: [2, 'assets/models/gltf/detail_treeC.gltf.glb', 15000],
-  WELLS: [3, 'assets/models/gltf/well.gltf.glb', 1500]
+  WELLS: [3, 'assets/models/gltf/well.gltf.glb', 200],
+  HOUSE: [4, 'assets/models/gltf/house.gltf.glb', 200]
 }
 
 let loadedAssets = 0
@@ -350,6 +351,7 @@ function makeChunk (chunkName, chunk, x0, z0) {
   decorations[MODELS.TREEB[0]] = []
   decorations[MODELS.TREEC[0]] = []
   decorations[MODELS.WELLS[0]] = []
+  decorations[MODELS.HOUSE[0]] = []
   noise.seed(PARAMETERS.world_seed)
   for (let y = 0; y < PARAMETERS.chunk_size; y++) {
     for (let x = 0; x < PARAMETERS.chunk_size; x++) {
@@ -388,7 +390,15 @@ function makeChunk (chunkName, chunk, x0, z0) {
         uv[j + 1] = 1
       }
 
-      if (vertices[i + 1] > 3 && temp < 0.1 && noise.perlin2((x0 + x), (z0 + y)) > 0.90) {
+      if (vertices[i + 1] > 3 && vertices[i + 1] < 30 && temp < 0.6 && temp > 0.2 && noise.perlin2((x0 + x), (z0 + y)) > 0.95) {
+        const tx = (vertices[i] + chunk.position.x) / 8
+        const ty = (vertices[i + 1] + 1) / 8
+        const tz = (vertices[i + 2] + chunk.position.z) / 8
+        const troty = noise.perlin2((x0 + x) * 123, (z0 + y) * 123) * Math.PI * 2
+        decorations[MODELS.HOUSE[0]].push([tx, ty, tz, troty])
+      }
+
+      if (vertices[i + 1] > 3 && temp < 0.15 && noise.perlin2((x0 + x), (z0 + y)) > 0.88) {
         const tx = (vertices[i] + chunk.position.x) / 8
         const ty = vertices[i + 1] / 8
         const tz = (vertices[i + 2] + chunk.position.z) / 8
@@ -602,7 +612,13 @@ function animate () {
           dummy.position.set(PosAndRot[0], PosAndRot[1], PosAndRot[2])
           dummy.rotation.set(0, PosAndRot[3], 0)
           dummy.updateMatrix()
-          for (let i = 0; i < ALL_INSTANCED_MODELS[MODELID].length; i++) { ALL_INSTANCED_MODELS[MODELID][i].setMatrixAt(counts[MODELID], dummy.matrix) }
+          for (let i = 0; i < ALL_INSTANCED_MODELS[MODELID].length; i++) {
+            if (MODELID == MODELS.HOUSE[0] && i == 5) { // Fucking disgusting but ok for today
+              dummy.position.set(PosAndRot[0], PosAndRot[1] - 0.5, PosAndRot[2])
+              dummy.updateMatrix()
+            }
+            ALL_INSTANCED_MODELS[MODELID][i].setMatrixAt(counts[MODELID], dummy.matrix)
+          }
           counts[MODELID]++
         }
       }
