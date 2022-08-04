@@ -181,7 +181,7 @@ function controls (deltaTime) {
   // fly down
   if (keyStates.KeyE || keyStates.KeyX) playerVelocity.y -= speedDelta
   // jump if player on floor
-  if (playerOnFloor && keyStates.Space) playerVelocity.y = 30
+  if (playerOnFloor && keyStates.Space && !CREATIVE_MODE) playerVelocity.y = 30
 }
 
 function updatePlayer (deltaTime) {
