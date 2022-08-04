@@ -390,14 +390,6 @@ function makeChunk (chunkName, chunk, x0, z0) {
         uv[j + 1] = 1
       }
 
-      if (vertices[i + 1] > 3 && vertices[i + 1] < 30 && temp < 0.6 && temp > 0.2 && noise.perlin2((x0 + x), (z0 + y)) > 0.95) {
-        const tx = (vertices[i] + chunk.position.x) / 8
-        const ty = (vertices[i + 1] + 1) / 8
-        const tz = (vertices[i + 2] + chunk.position.z) / 8
-        const troty = noise.perlin2((x0 + x) * 123, (z0 + y) * 123) * Math.PI * 2
-        decorations[MODELS.HOUSE[0]].push([tx, ty, tz, troty])
-      }
-
       if (vertices[i + 1] > 3 && temp < 0.15 && noise.perlin2((x0 + x), (z0 + y)) > 0.88) {
         const tx = (vertices[i] + chunk.position.x) / 8
         const ty = vertices[i + 1] / 8
@@ -406,7 +398,13 @@ function makeChunk (chunkName, chunk, x0, z0) {
         decorations[MODELS.WELLS[0]].push([tx, ty, tz, troty])
       }
 
-      if (vertices[i + 1] > 5 && vertices[i + 1] < 40 && temp > 0.34 && rain < 0.67 && noise.perlin2((x0 + x), (z0 + y)) > 0.7) {
+      if (vertices[i + 1] > 3 && vertices[i + 1] < 30 && temp < 0.6 && temp > 0.2 && noise.perlin2((x0 + x), (z0 + y)) > 0.95) {
+        const tx = (vertices[i] + chunk.position.x) / 8
+        const ty = (vertices[i + 1] + 1) / 8
+        const tz = (vertices[i + 2] + chunk.position.z) / 8
+        const troty = noise.perlin2((x0 + x) * 123, (z0 + y) * 123) * Math.PI * 2
+        decorations[MODELS.HOUSE[0]].push([tx, ty, tz, troty])
+      } else if (vertices[i + 1] > 5 && vertices[i + 1] < 40 && temp > 0.34 && rain < 0.67 && noise.perlin2((x0 + x), (z0 + y)) > 0.7) {
         const treechoice = noise.perlin2((x0 + x) * 4242, (z0 + y) * 6969)
         const tx = (vertices[i] + chunk.position.x) / 8
         const ty = vertices[i + 1] / 8
