@@ -9,6 +9,8 @@ const PARAMETERS = {
   chunk_material: 'Phong Material',
   gravity: 70,
   day_night_speed: 0.01,
+  sky_color: 0x79a6ff,
+  fog_density: 0.001,
   ambient_light_color: 0x404040,
   ambient_light_intensity: 0.5,
   directional_light_color: 0xfdfbd3,
@@ -121,10 +123,9 @@ renderer.outputEncoding = THREE.sRGBEncoding
 renderer.shadowMap.enabled = true
 renderer.shadowMap.type = THREE.PCFSoftShadowMap
 const scene = new THREE.Scene()
-const SKY_COLOR = 0x79a6ff
-scene.background = new THREE.Color(SKY_COLOR)
-// scene.fog = new THREE.Fog(SKY_COLOR, 0, 400)
-scene.fog = new THREE.FogExp2(SKY_COLOR, 0.001)
+scene.background = new THREE.Color(PARAMETERS.sky_color)
+// scene.fog = new THREE.Fog(PARAMETERS.sky_color, 0, 400)
+scene.fog = new THREE.FogExp2(PARAMETERS.sky_color, PARAMETERS.fog_density)
 // scene.background = TEXTURES["Sky Texture"]
 
 const camera = new THREE.PerspectiveCamera(
@@ -485,6 +486,17 @@ controlsFolder.add(PARAMETERS, 'chunk_material', Object.keys(MATERIALS)).name('C
 )
 controlsFolder.add(PARAMETERS, 'gravity', 1, 100, 1).name('Gravity')
 controlsFolder.add(PARAMETERS, 'day_night_speed', 0, 1, 0.01).name('Day-Night Cycle Speed')
+controlsFolder.addColor(PARAMETERS, 'sky_color').name('Sky Color').onChange(
+  function (value) {
+    scene.background = new THREE.Color(value)
+    scene.fog = new THREE.FogExp2(value, PARAMETERS.fog_density)
+  }
+)
+controlsFolder.add(PARAMETERS, 'fog_density', 0, 0.1, 0.0001).name('Fog Density').onChange(
+  function (value) {
+    scene.fog = new THREE.FogExp2(PARAMETERS.sky_color, value)
+  }
+)
 
 const lightsFolder = gui.addFolder('Lights')
 
@@ -535,7 +547,7 @@ function updateDayNight () {
 }
 
 function animate () {
-  if (!nightTime) {
+  if (!nightTime && PARAMETERS.day_night_speed !== 0) {
     updateDayNight()
   }
   // Prevent user from moving when the pointer is not locked
