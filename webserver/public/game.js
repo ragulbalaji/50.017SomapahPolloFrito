@@ -7,7 +7,11 @@ const PARAMETERS = {
   max_num_chunks: 128,
   gen_depth: 2,
   chunk_material: 'Phong Material',
-  gravity: 70
+  gravity: 70,
+  ambient_light_color: 0x404040,
+  ambient_light_intensity: 0.5,
+  directional_light_color: 0xfdfbd3,
+  directional_light_intensity: 0.8
 }
 
 const MATERIAL_PARAMETERS = {
@@ -69,6 +73,8 @@ function loadInstancesOf (idx, GLTFpath, count) {
           mat.flatShading = true
           const instancedMesh = new THREE.InstancedMesh(child.geometry, mat, count)
           instancedMesh.scale.set(8, 8, 8)
+          instancedMesh.castShadow = true
+          instancedMesh.receiveShadow = true
           scene.add(instancedMesh)
           ALL_INSTANCED_MODELS[idx].push(instancedMesh)
         }
@@ -313,11 +319,21 @@ function init () {
 /// ////////////////////////////////////////////////////////////////////////////
 // Geometry
 
-const ambientLight = new THREE.AmbientLight(0x404040, 0.5)
+const ambientLight = new THREE.AmbientLight(PARAMETERS.ambient_light_color, PARAMETERS.ambient_light_intensity)
 scene.add(ambientLight)
-const directionalLight = new THREE.DirectionalLight(0xfdfbd3, 0.8)
+const directionalLight = new THREE.DirectionalLight(PARAMETERS.directional_light_color, PARAMETERS.directional_light_intensity)
 directionalLight.castShadow = true
 directionalLight.position.set(100, 100, 0)
+directionalLight.shadow.camera.left = -15
+directionalLight.shadow.camera.right = 15
+directionalLight.shadow.camera.top = 15
+directionalLight.shadow.camera.bottom = -15
+
+directionalLight.shadow.camera.near = 2
+directionalLight.shadow.camera.far = 50
+
+directionalLight.shadow.mapSize.x = 1024
+directionalLight.shadow.mapSize.y = 1024
 scene.add(directionalLight)
 
 let iiii = 0
@@ -461,6 +477,21 @@ controlsFolder.add(PARAMETERS, 'chunk_material', Object.keys(MATERIALS)).name('C
 )
 controlsFolder.add(PARAMETERS, 'gravity', 1, 100, 1).name('Gravity')
 
+const lightsFolder = gui.addFolder('Lights')
+
+lightsFolder.addColor(PARAMETERS, 'ambient_light_color').name('Ambient Color').onFinishChange(function (value) {
+  ambientLight.color.setHex(value)
+})
+lightsFolder.add(PARAMETERS, 'ambient_light_intensity', 0, 1, 0.01).name('Ambient Intensity').onFinishChange(function (value) {
+  ambientLight.intensity = value
+})
+lightsFolder.addColor(PARAMETERS, 'directional_light_color').name('Directional Color').onFinishChange(function (value) {
+  directionalLight.color.setHex(value)
+})
+lightsFolder.add(PARAMETERS, 'directional_light_intensity', 0, 1, 0.01).name('Directional Intensity').onFinishChange(function (value) {
+  directionalLight.intensity = value
+})
+
 const hudFolder = gui.addFolder('HUD')
 
 hudFolder.add(HUD, 'camera_position').name('Camera Position').listen().disable()
@@ -514,6 +545,7 @@ function animate () {
 
         const chunk = new THREE.Mesh(geometry, MATERIALS[PARAMETERS.chunk_material])
         chunk.receiveShadow = true
+        chunk.castShadow = true
         scene.add(chunk)
 
         chunk.position.x = chunkXX * PARAMETERS.chunk_size
