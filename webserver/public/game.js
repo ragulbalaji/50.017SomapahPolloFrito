@@ -8,11 +8,12 @@ const PARAMETERS = {
   gen_depth: 2,
   chunk_material: 'Phong Material',
   gravity: 70,
+  day_night_speed: 0.01,
   ambient_light_color: 0x404040,
   ambient_light_intensity: 0.5,
   directional_light_color: 0xfdfbd3,
   directional_light_intensity: 0.8,
-  directional_light_angle: 90
+  directional_light_angle: 90,
 }
 
 const MATERIAL_PARAMETERS = {
@@ -42,6 +43,7 @@ const PLAYER_HEIGHT = 2
 const PLAYER_SPEED_GROUND = 60
 const PLAYER_SPEED_AIR = 30
 const CREATIVE_SPEED_FACTOR = 20
+const NIGHT_TIME_FACTOR = 2500
 const [LOWER_Y, UPPER_Y] = [0, 250] // vertical world bounds
 const [LOWER_X, UPPER_X] = [-1e14, 1e14] // x-axis world bounds
 const [LOWER_Z, UPPER_Z] = [-1e14, 1e14] // z-axis world bounds
@@ -474,6 +476,7 @@ controlsFolder.add(PARAMETERS, 'chunk_material', Object.keys(MATERIALS)).name('C
   }
 )
 controlsFolder.add(PARAMETERS, 'gravity', 1, 100, 1).name('Gravity')
+controlsFolder.add(PARAMETERS, 'day_night_speed', 0, 1, 0.01).name('Day-Night Cycle Speed')
 
 const lightsFolder = gui.addFolder('Lights')
 
@@ -489,7 +492,7 @@ lightsFolder.addColor(PARAMETERS, 'directional_light_color').name('Directional C
 lightsFolder.add(PARAMETERS, 'directional_light_intensity', 0, 1, 0.01).name('Directional Intensity').onChange(function (value) {
   directionalLight.intensity = value
 })
-lightsFolder.add(PARAMETERS, 'directional_light_angle', 0, 180, 0.1).name("Directional Angle").onChange(function (value) {
+lightsFolder.add(PARAMETERS, 'directional_light_angle', 0, 180, 0.1).name("Directional Angle").listen().onChange(function (value) {
   directionalLight.position.set(100, 100, -100 / Math.tan(value * Math.PI / 180))
 })
 
@@ -506,7 +509,27 @@ handleMaterialSpecificControllers(PARAMETERS.chunk_material)
 /// ////////////////////////////////////////////////////////////////////////////
 // Animate
 
+let nightTime = false
+
+function itsDayTime () {
+  nightTime = false
+}
+
+function updateDayNight () {
+  PARAMETERS.directional_light_angle += PARAMETERS.day_night_speed
+  if (PARAMETERS.directional_light_angle >= 180) {
+    PARAMETERS.directional_light_angle = 0
+    nightTime = true
+    setTimeout(itsDayTime, NIGHT_TIME_FACTOR / PARAMETERS.day_night_speed)
+  }
+  PARAMETERS.directional_light_angle %= 180
+  directionalLight.position.set(100, 100, -100 / Math.tan(PARAMETERS.directional_light_angle * Math.PI / 180))
+}
+
 function animate () {
+  if (!nightTime) {
+    updateDayNight()
+  }
   // Prevent user from moving when the pointer is not locked
   if (pointerLocked) {
     const deltaTime = Math.min(0.05, clock.getDelta()) / STEPS_PER_FRAME
