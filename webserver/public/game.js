@@ -55,6 +55,7 @@ let playerOnFloor = true
 let CREATIVE_MODE = true
 const keyStates = new Map() // to store key presses
 const loadedChunks = new Map() // to store currently loaded chunks
+const loadedDecorations = new Map() // to store decorations on loaded chunks
 
 // References
 const blocker = document.getElementById('blocker')
@@ -91,10 +92,10 @@ function loadInstancesOf (idx, GLTFpath, count) {
 }
 
 const MODELS = {
-  TREEA: [0, 'assets/models/gltf/detail_treeA.gltf.glb', 2000],
-  TREEB: [1, 'assets/models/gltf/detail_treeB.gltf.glb', 2000],
-  TREEC: [2, 'assets/models/gltf/detail_treeC.gltf.glb', 2000],
-  WELLS: [3, 'assets/models/gltf/well.gltf.glb', 200]
+  TREEA: [0, 'assets/models/gltf/detail_treeA.gltf.glb', 15000],
+  TREEB: [1, 'assets/models/gltf/detail_treeB.gltf.glb', 15000],
+  TREEC: [2, 'assets/models/gltf/detail_treeC.gltf.glb', 15000],
+  WELLS: [3, 'assets/models/gltf/well.gltf.glb', 1500]
 }
 
 let loadedAssets = 0
@@ -336,15 +337,15 @@ directionalLight.shadow.mapSize.x = 1024
 directionalLight.shadow.mapSize.y = 1024
 scene.add(directionalLight)
 
-let iiii = 0
-let jjjj = 0
-let kkkk = 0
-function makeChunk (chunk, x0, z0) {
+function makeChunk (chunkName, chunk, x0, z0) {
   x0 += 6969
   z0 += 6969
-  const dummy = new THREE.Object3D()
   const vertices = chunk.geometry.attributes.position.array
   const uv = chunk.geometry.attributes.uv.array
+  const decorations = {}
+  decorations[MODELS.TREEA[0]] = []
+  decorations[MODELS.TREEB[0]] = []
+  decorations[MODELS.TREEC[0]] = []
   noise.seed(PARAMETERS.world_seed)
   for (let y = 0; y < PARAMETERS.chunk_size; y++) {
     for (let x = 0; x < PARAMETERS.chunk_size; x++) {
@@ -384,33 +385,23 @@ function makeChunk (chunk, x0, z0) {
       }
 
       if (vertices[i + 1] > 5 && vertices[i + 1] < 40 && temp > 0.34 && rain < 0.67 && noise.perlin2((x0 + x), (z0 + y)) > 0.7) {
-        dummy.position.set((vertices[i] + chunk.position.x) / 8, vertices[i + 1] / 8, (vertices[i + 2] + chunk.position.z) / 8)
-        dummy.rotation.set(0, noise.perlin2((x0 + x) * 123, (z0 + y) * 123) * Math.PI * 2, 0)
-        dummy.updateMatrix()
         const treechoice = noise.perlin2((x0 + x) * 4242, (z0 + y) * 6969)
+        const tx = (vertices[i] + chunk.position.x) / 8
+        const ty = vertices[i + 1] / 8
+        const tz = (vertices[i + 2] + chunk.position.z) / 8
+        const troty = noise.perlin2((x0 + x) * 123, (z0 + y) * 123) * Math.PI * 2
         if (treechoice < 0) {
-          ALL_INSTANCED_MODELS[0][0].setMatrixAt(iiii, dummy.matrix)
-          ALL_INSTANCED_MODELS[0][1].setMatrixAt(iiii, dummy.matrix)
-          iiii = (iiii + 1) % 2000
+          decorations[MODELS.TREEA[0]].push([tx, ty, tz, troty])
         } else if (treechoice > 0.4) {
-          ALL_INSTANCED_MODELS[2][0].setMatrixAt(jjjj, dummy.matrix)
-          ALL_INSTANCED_MODELS[2][1].setMatrixAt(jjjj, dummy.matrix)
-          jjjj = (jjjj + 1) % 2000
+          decorations[MODELS.TREEB[0]].push([tx, ty, tz, troty])
         } else {
-          ALL_INSTANCED_MODELS[1][0].setMatrixAt(kkkk, dummy.matrix)
-          ALL_INSTANCED_MODELS[1][1].setMatrixAt(kkkk, dummy.matrix)
-          kkkk = (kkkk + 1) % 2000
+          decorations[MODELS.TREEC[0]].push([tx, ty, tz, troty])
         }
       }
     }
   }
+  loadedDecorations.set(chunkName, decorations)
 
-  ALL_INSTANCED_MODELS[0][0].instanceMatrix.needsUpdate = true
-  ALL_INSTANCED_MODELS[0][1].instanceMatrix.needsUpdate = true
-  ALL_INSTANCED_MODELS[1][0].instanceMatrix.needsUpdate = true
-  ALL_INSTANCED_MODELS[1][1].instanceMatrix.needsUpdate = true
-  ALL_INSTANCED_MODELS[2][0].instanceMatrix.needsUpdate = true
-  ALL_INSTANCED_MODELS[2][1].instanceMatrix.needsUpdate = true
   chunk.geometry.attributes.position.needsUpdate = true
   chunk.geometry.attributes.uv.needsUpdate = true
 }
@@ -526,6 +517,7 @@ function animate () {
 
   const chunkX = Math.floor(camera.position.x / PARAMETERS.chunk_size + 0.5)
   const chunkZ = Math.floor(camera.position.z / PARAMETERS.chunk_size + 0.5)
+  let newChunksAdded = false
   // For incremental rendering
   let gencount = 0
   for (let xoffset = -PARAMETERS.gen_depth; xoffset <= PARAMETERS.gen_depth && gencount < 1; xoffset++) {
@@ -551,13 +543,43 @@ function animate () {
         chunk.position.x = chunkXX * PARAMETERS.chunk_size
         chunk.position.z = chunkZZ * PARAMETERS.chunk_size
         makeChunk(
+          chunkName,
           chunk,
           (chunkXX - 0.5) * (PARAMETERS.chunk_size - 1),
           (chunkZZ - 0.5) * (PARAMETERS.chunk_size - 1)
         )
 
         loadedChunks.set(chunkName, chunk)
+        newChunksAdded = true
         gencount++
+      }
+    }
+  }
+
+  if (newChunksAdded) {
+    // rebuild all instances meshes
+    const dummy = new THREE.Object3D()
+    const counts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+    for (const chunkName of loadedChunks.keys()) {
+      // look through decoration
+      const chunkDecoration = loadedDecorations.get(chunkName)
+      for (const MODELID of Object.keys(chunkDecoration)) {
+        for (const PosAndRot of chunkDecoration[MODELID]) {
+          dummy.position.set(PosAndRot[0], PosAndRot[1], PosAndRot[2])
+          dummy.rotation.set(0, PosAndRot[3], 0)
+          dummy.updateMatrix()
+          for (let i = 0; i < ALL_INSTANCED_MODELS[MODELID].length; i++) { ALL_INSTANCED_MODELS[MODELID][i].setMatrixAt(counts[MODELID], dummy.matrix) }
+          counts[MODELID]++
+        }
+      }
+    }
+    console.log(counts)
+
+    for (const MODELID of Object.keys(ALL_INSTANCED_MODELS)) {
+      for (let i = 0; i < ALL_INSTANCED_MODELS[MODELID].length; i++) {
+        ALL_INSTANCED_MODELS[MODELID][i].count = counts[MODELID]
+        ALL_INSTANCED_MODELS[MODELID][i].instanceMatrix.needsUpdate = true
       }
     }
   }
