@@ -554,16 +554,28 @@ function updateDayNight () {
   directionalLight.position.set(100, 100, -100 / Math.tan(PARAMETERS.directional_light_angle * Math.PI / 180))
   const darkeningFactor = (-Math.sin(PARAMETERS.directional_light_angle * Math.PI / 180) + 1) * 100
   const currentSkyColor = tinycolor('#' + PARAMETERS.sky_color.toString(16))
-  console.log(darkeningFactor)
+  const newSkyColor = parseInt(currentSkyColor.darken(darkeningFactor).toString().substring(1), 16)
+  scene.background = new THREE.Color(newSkyColor)
+  scene.fog = new THREE.FogExp2(newSkyColor, PARAMETERS.fog_density)
+}
+
+function updateNightSky () {
+  const darkeningFactor = (-Math.sin(PARAMETERS.directional_light_angle * Math.PI / 180) + 1) * 100
+  const currentSkyColor = tinycolor('#' + PARAMETERS.sky_color.toString(16))
   const newSkyColor = parseInt(currentSkyColor.darken(darkeningFactor).toString().substring(1), 16)
   scene.background = new THREE.Color(newSkyColor)
   scene.fog = new THREE.FogExp2(newSkyColor, PARAMETERS.fog_density)
 }
 
 function animate () {
-  if (!nightTime && PARAMETERS.day_night_speed !== 0) {
-    updateDayNight()
+  if (PARAMETERS.day_night_speed !== 0) {
+    if (!nightTime) {
+      updateDayNight()
+    } else {
+      updateNightSky()
+    }
   }
+
   // Prevent user from moving when the pointer is not locked
   if (pointerLocked) {
     const deltaTime = Math.min(0.05, clock.getDelta()) / STEPS_PER_FRAME
