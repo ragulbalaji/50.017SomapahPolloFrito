@@ -11,7 +11,8 @@ const PARAMETERS = {
   ambient_light_color: 0x404040,
   ambient_light_intensity: 0.5,
   directional_light_color: 0xfdfbd3,
-  directional_light_intensity: 0.8
+  directional_light_intensity: 0.8,
+  directional_light_angle: 90
 }
 
 const MATERIAL_PARAMETERS = {
@@ -324,7 +325,7 @@ const ambientLight = new THREE.AmbientLight(PARAMETERS.ambient_light_color, PARA
 scene.add(ambientLight)
 const directionalLight = new THREE.DirectionalLight(PARAMETERS.directional_light_color, PARAMETERS.directional_light_intensity)
 directionalLight.castShadow = true
-directionalLight.position.set(100, 100, 0)
+directionalLight.position.set(100, 100, -100 / Math.tan(PARAMETERS.directional_light_angle * Math.PI / 180))
 directionalLight.shadow.camera.left = -15
 directionalLight.shadow.camera.right = 15
 directionalLight.shadow.camera.top = 15
@@ -487,6 +488,9 @@ lightsFolder.addColor(PARAMETERS, 'directional_light_color').name('Directional C
 })
 lightsFolder.add(PARAMETERS, 'directional_light_intensity', 0, 1, 0.01).name('Directional Intensity').onChange(function (value) {
   directionalLight.intensity = value
+})
+lightsFolder.add(PARAMETERS, 'directional_light_angle', 0, 180, 0.1).name("Directional Angle").onChange(function (value) {
+  directionalLight.position.set(100, 100, -100 / Math.tan(value * Math.PI / 180))
 })
 
 const hudFolder = gui.addFolder('HUD')
