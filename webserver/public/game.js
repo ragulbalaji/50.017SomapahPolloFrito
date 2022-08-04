@@ -206,10 +206,20 @@ function onPointerLockChange () {
     instructions.style.display = 'none'
     blocker.style.display = 'none'
     pointerLocked = true
+    if (!gui._closed) {
+      controlsFolder.close()
+      materialSpecificParamsFolder.close()
+      lightsFolder.close()
+    }
   } else {
     pointerLocked = false
     blocker.style.display = 'block'
     instructions.style.display = ''
+    if (!gui._closed) {
+      controlsFolder.open()
+      materialSpecificParamsFolder.open()
+      lightsFolder.open()
+    }
   }
 }
 
