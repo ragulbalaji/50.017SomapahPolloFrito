@@ -11,6 +11,17 @@ const PARAMETERS = {
   day_night_speed: 0.01,
   sky_color: 0x79a6ff,
   fog_density: 0.001,
+  chunk_noise_x_offset: 6969,
+  chunk_noise_z_offset: 6969,
+  temp_divisor: 512,
+  rain_divisor: 256,
+  mountain_divisor: 512,
+  mountain_threshold: 24,
+  troty_multiplier: 123,
+  tree_choice_x_multiplier: 4242,
+  tree_choice_z_multiplier: 6969,
+  tree_a_threshold: 0,
+  tree_b_threshold: 0.4,
   ambient_light_color: 0x404040,
   ambient_light_intensity: 0.5,
   directional_light_color: 0xfdfbd3,
@@ -56,6 +67,7 @@ const playerVelocity = new THREE.Vector3()
 const playerDirection = new THREE.Vector3()
 const playerPosition = new THREE.Vector3(0, PLAYER_INIT_HEIGHT, 0)
 const eulerAngle = new THREE.Euler(0, 0, 0, 'YXZ')
+let nightTime = false
 let pointerLocked = false
 let playerOnFloor = true
 let CREATIVE_MODE = true
@@ -169,13 +181,21 @@ function controls (deltaTime) {
   // if shift is pressed then move at one-third speed
   if (keyStates.ShiftLeft || keyStates.ShiftRight) speedDelta /= 3
   // move forward
-  if (keyStates.KeyW || keyStates.ArrowUp) { playerVelocity.add(getForwardVector().multiplyScalar(speedDelta)) }
+  if (keyStates.KeyW || keyStates.ArrowUp) {
+    playerVelocity.add(getForwardVector().multiplyScalar(speedDelta))
+  }
   // move backward
-  if (keyStates.KeyS || keyStates.ArrowDown) { playerVelocity.add(getForwardVector().multiplyScalar(-speedDelta)) }
+  if (keyStates.KeyS || keyStates.ArrowDown) {
+    playerVelocity.add(getForwardVector().multiplyScalar(-speedDelta))
+  }
   // move left
-  if (keyStates.KeyA || keyStates.ArrowLeft) { playerVelocity.add(getSideVector().multiplyScalar(-speedDelta)) }
+  if (keyStates.KeyA || keyStates.ArrowLeft) {
+    playerVelocity.add(getSideVector().multiplyScalar(-speedDelta))
+  }
   // move right
-  if (keyStates.KeyD || keyStates.ArrowRight) { playerVelocity.add(getSideVector().multiplyScalar(speedDelta)) }
+  if (keyStates.KeyD || keyStates.ArrowRight) {
+    playerVelocity.add(getSideVector().multiplyScalar(speedDelta))
+  }
   // fly up
   if (keyStates.KeyQ || keyStates.KeyZ) playerVelocity.y += speedDelta
   // fly down
@@ -210,6 +230,7 @@ function onPointerLockChange () {
       controlsFolder.close()
       materialSpecificParamsFolder.close()
       lightsFolder.close()
+      noiseFolder.close()
     }
   } else {
     pointerLocked = false
@@ -219,6 +240,7 @@ function onPointerLockChange () {
       controlsFolder.open()
       materialSpecificParamsFolder.open()
       lightsFolder.open()
+      noiseFolder.open()
     }
   }
 }
@@ -344,7 +366,7 @@ moonLight.position.set(100, 100, 0)
 scene.add(moonLight)
 const directionalLight = new THREE.DirectionalLight(PARAMETERS.directional_light_color, PARAMETERS.directional_light_intensity)
 directionalLight.castShadow = true
-directionalLight.position.set(100, 100, -100 / Math.tan(PARAMETERS.directional_light_angle * Math.PI / 180))
+directionalLight.position.set(100, 100, -100 / Math.tan((PARAMETERS.directional_light_angle * Math.PI) / 180))
 directionalLight.shadow.camera.left = -15
 directionalLight.shadow.camera.right = 15
 directionalLight.shadow.camera.top = 15
@@ -358,8 +380,8 @@ directionalLight.shadow.mapSize.y = 1024
 scene.add(directionalLight)
 
 function makeChunk (chunkName, chunk, x0, z0) {
-  x0 += 6969
-  z0 += 6969
+  x0 += PARAMETERS.chunk_noise_x_offset
+  z0 += PARAMETERS.chunk_noise_z_offset
   const vertices = chunk.geometry.attributes.position.array
   const uv = chunk.geometry.attributes.uv.array
   const decorations = {}
@@ -372,8 +394,8 @@ function makeChunk (chunkName, chunk, x0, z0) {
   for (let y = 0; y < PARAMETERS.chunk_size; y++) {
     for (let x = 0; x < PARAMETERS.chunk_size; x++) {
       const j = 2 * (y * PARAMETERS.chunk_size + x)
-      const temp = (noise.simplex2((x0 + x) / 512, (z0 + y) / 512) + 1) / 2
-      let rain = (noise.simplex2((x0 + x) / 256, (z0 + y) / 256) + 1) / 2
+      const temp = (noise.simplex2((x0 + x) / PARAMETERS.temp_divisor, (z0 + y) / PARAMETERS.temp_divisor) + 1) / 2
+      let rain = (noise.simplex2((x0 + x) / PARAMETERS.rain_divisor, (z0 + y) / PARAMETERS.rain_divisor) + 1) / 2
       rain = Math.min(rain, 0.99 - temp)
       uv[j] = temp
       uv[j + 1] = rain
@@ -384,10 +406,10 @@ function makeChunk (chunkName, chunk, x0, z0) {
         noise.simplex2((x0 + x) / 128, (z0 + y) / 128) * 4 +
         Math.min(32, noise.simplex2((x0 + x) / 768, (z0 + y) / 768) * 32 + 16)
 
-      const m = Math.abs(noise.perlin2((x0 + x) / 512, (z0 + y) / 512))
-      const mt = Math.abs(noise.simplex2((x0 + x) / 512, (z0 + y) / 512) * 0.2)
-      if (m < mt && h > 24) {
-        h *= (1 + (mt - m) * h / 5)
+      const m = Math.abs(noise.perlin2((x0 + x) / PARAMETERS.mountain_divisor, (z0 + y) / PARAMETERS.mountain_divisor))
+      const mt = Math.abs(noise.simplex2((x0 + x) / PARAMETERS.mountain_divisor, (z0 + y) / PARAMETERS.mountain_divisor) * 0.2)
+      if (m < mt && h > PARAMETERS.mountain_threshold) {
+        h *= 1 + ((mt - m) * h) / 5
       }
 
       vertices[i + 1] = Math.max(0, h)
@@ -406,29 +428,29 @@ function makeChunk (chunkName, chunk, x0, z0) {
         uv[j + 1] = 1
       }
 
-      if (vertices[i + 1] > 3 && temp < 0.15 && noise.perlin2((x0 + x), (z0 + y)) > 0.88) {
+      if (vertices[i + 1] > 3 && temp < 0.15 && noise.perlin2(x0 + x, z0 + y) > 0.88) {
         const tx = (vertices[i] + chunk.position.x) / 8
         const ty = vertices[i + 1] / 8
         const tz = (vertices[i + 2] + chunk.position.z) / 8
-        const troty = noise.perlin2((x0 + x) * 123, (z0 + y) * 123) * Math.PI * 2
+        const troty = noise.perlin2((x0 + x) * PARAMETERS.troty_multiplier, (z0 + y) * PARAMETERS.troty_multiplier) * Math.PI * 2
         decorations[MODELS.WELLS[0]].push([tx, ty, tz, troty])
       }
 
-      if (vertices[i + 1] > 3 && vertices[i + 1] < 30 && temp < 0.6 && temp > 0.2 && noise.perlin2((x0 + x), (z0 + y)) > 0.95) {
+      if (vertices[i + 1] > 3 && vertices[i + 1] < 30 && temp < 0.6 && temp > 0.2 && noise.perlin2(x0 + x, z0 + y) > 0.95) {
         const tx = (vertices[i] + chunk.position.x) / 8
         const ty = (vertices[i + 1] + 1) / 8
         const tz = (vertices[i + 2] + chunk.position.z) / 8
-        const troty = noise.perlin2((x0 + x) * 123, (z0 + y) * 123) * Math.PI * 2
+        const troty = noise.perlin2((x0 + x) * PARAMETERS.troty_multiplier, (z0 + y) * PARAMETERS.troty_multiplier) * Math.PI * 2
         decorations[MODELS.HOUSE[0]].push([tx, ty, tz, troty])
-      } else if (vertices[i + 1] > 5 && vertices[i + 1] < 40 && temp > 0.34 && rain < 0.67 && noise.perlin2((x0 + x), (z0 + y)) > 0.7) {
-        const treechoice = noise.perlin2((x0 + x) * 4242, (z0 + y) * 6969)
+      } else if (vertices[i + 1] > 5 && vertices[i + 1] < 40 && temp > 0.34 && rain < 0.67 && noise.perlin2(x0 + x, z0 + y) > 0.7) {
+        const treechoice = noise.perlin2((x0 + x) * PARAMETERS.tree_choice_x_multiplier, (z0 + y) * PARAMETERS.tree_choice_z_multiplier)
         const tx = (vertices[i] + chunk.position.x) / 8
         const ty = vertices[i + 1] / 8
         const tz = (vertices[i + 2] + chunk.position.z) / 8
-        const troty = noise.perlin2((x0 + x) * 123, (z0 + y) * 123) * Math.PI * 2
-        if (treechoice < 0) {
+        const troty = noise.perlin2((x0 + x) * PARAMETERS.troty_multiplier, (z0 + y) * PARAMETERS.troty_multiplier) * Math.PI * 2
+        if (treechoice < PARAMETERS.tree_a_threshold) {
           decorations[MODELS.TREEA[0]].push([tx, ty, tz, troty])
-        } else if (treechoice > 0.4) {
+        } else if (treechoice > PARAMETERS.tree_b_threshold) {
           decorations[MODELS.TREEB[0]].push([tx, ty, tz, troty])
         } else {
           decorations[MODELS.TREEC[0]].push([tx, ty, tz, troty])
@@ -470,74 +492,181 @@ let materialSpecificParamsFolder
 function handleMaterialSpecificControllers (materialName) {
   for (const materialParams in MATERIAL_PARAMETERS[materialName]) {
     if (materialParams === 'color') {
-      materialSpecificParamsFolder.addColor(MATERIAL_PARAMETERS[materialName], materialParams).name('Color').onChange(function (value) {
-        MATERIALS[materialName].color.setHex(value)
-      })
+      materialSpecificParamsFolder
+        .addColor(MATERIAL_PARAMETERS[materialName], materialParams)
+        .name('Color')
+        .onChange(function (value) {
+          MATERIALS[materialName].color.setHex(value)
+        })
     } else if (materialParams === 'shininess') {
-      materialSpecificParamsFolder.add(MATERIAL_PARAMETERS[materialName], materialParams, 0, 100, 0.1).name('Shininess').onChange(function (value) {
-        MATERIALS[materialName].shininess = value
-      })
+      materialSpecificParamsFolder
+        .add(MATERIAL_PARAMETERS[materialName], materialParams, 0, 100, 0.1)
+        .name('Shininess')
+        .onChange(function (value) {
+          MATERIALS[materialName].shininess = value
+        })
     } else if (materialParams === 'map') {
-      materialSpecificParamsFolder.add(MATERIAL_PARAMETERS[materialName], materialParams, Object.keys(TEXTURES)).name('Texture Map').onChange(function (value) {
-        MATERIALS[materialName].map = TEXTURES[value]
-      })
+      materialSpecificParamsFolder
+        .add(
+          MATERIAL_PARAMETERS[materialName],
+          materialParams,
+          Object.keys(TEXTURES)
+        )
+        .name('Texture Map')
+        .onChange(function (value) {
+          MATERIALS[materialName].map = TEXTURES[value]
+        })
     }
   }
 }
 
-controlsFolder.add(PARAMETERS, 'world_seed', Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER, 1).name('World Seed').onFinishChange(unloadAllLoadedChunks)
-controlsFolder.add(PARAMETERS, 'chunk_size', 16, 256, 1).name('Chunk Size').onFinishChange(unloadAllLoadedChunks)
-controlsFolder.add(PARAMETERS, 'max_num_chunks', 81, 512, 1).name('Max. Number of Chunks').onFinishChange(unloadAllLoadedChunks)
-controlsFolder.add(PARAMETERS, 'gen_depth', 1, 4, 1).name('Generation Depth').onFinishChange(unloadAllLoadedChunks)
-controlsFolder.add(PARAMETERS, 'chunk_material', Object.keys(MATERIALS)).name('Chunk Material').onFinishChange(
-  function (materialName) {
+controlsFolder
+  .add(PARAMETERS, 'world_seed', Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER, 1)
+  .name('World Seed')
+  .onFinishChange(unloadAllLoadedChunks)
+controlsFolder
+  .add(PARAMETERS, 'chunk_size', 16, 256, 1)
+  .name('Chunk Size')
+  .onFinishChange(unloadAllLoadedChunks)
+controlsFolder
+  .add(PARAMETERS, 'max_num_chunks', 81, 512, 1)
+  .name('Max. Number of Chunks')
+  .onFinishChange(unloadAllLoadedChunks)
+controlsFolder
+  .add(PARAMETERS, 'gen_depth', 1, 4, 1)
+  .name('Generation Depth')
+  .onFinishChange(unloadAllLoadedChunks)
+controlsFolder
+  .add(PARAMETERS, 'chunk_material', Object.keys(MATERIALS))
+  .name('Chunk Material')
+  .onFinishChange(function (materialName) {
     unloadAllLoadedChunks()
     if (materialSpecificParamsFolder != null) {
       materialSpecificParamsFolder.destroy()
     }
     materialSpecificParamsFolder = gui.addFolder('Material Parameters')
     handleMaterialSpecificControllers(materialName)
-  }
-)
+  })
 controlsFolder.add(PARAMETERS, 'gravity', 1, 100, 1).name('Gravity')
-controlsFolder.add(PARAMETERS, 'day_night_speed', 0, 1, 0.01).name('Day-Night Cycle Speed')
-controlsFolder.addColor(PARAMETERS, 'sky_color').name('Base Sky Color').onChange(
-  function (value) {
+controlsFolder
+  .add(PARAMETERS, 'day_night_speed', 0, 1, 0.01)
+  .name('Day-Night Cycle Speed')
+controlsFolder
+  .addColor(PARAMETERS, 'sky_color')
+  .name('Base Sky Color')
+  .onChange(function (value) {
     scene.background = new THREE.Color(value)
     scene.fog = new THREE.FogExp2(value, PARAMETERS.fog_density)
-  }
-)
-controlsFolder.add(PARAMETERS, 'fog_density', 0, 0.1, 0.0001).name('Fog Density').onChange(
-  function (value) {
+  })
+controlsFolder
+  .add(PARAMETERS, 'fog_density', 0, 0.1, 0.0001)
+  .name('Fog Density')
+  .onChange(function (value) {
     scene.fog = new THREE.FogExp2(PARAMETERS.sky_color, value)
-  }
-)
+  })
+
+const noiseFolder = gui.addFolder('Noise')
+
+noiseFolder
+  .add(PARAMETERS, 'chunk_noise_x_offset', Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER, 1)
+  .name('Chunk X Offset')
+  .onFinishChange(unloadAllLoadedChunks)
+
+noiseFolder
+  .add(PARAMETERS, 'chunk_noise_z_offset', Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER, 1)
+  .name('Chunk Z Offset')
+  .onFinishChange(unloadAllLoadedChunks)
+noiseFolder
+  .add(PARAMETERS, 'temp_divisor', 1, 1024, 1)
+  .name('Temperature Divisor')
+  .onFinishChange(unloadAllLoadedChunks)
+noiseFolder
+  .add(PARAMETERS, 'rain_divisor', 1, 1024, 1)
+  .name('Rain Divisor')
+  .onFinishChange(unloadAllLoadedChunks)
+noiseFolder
+  .add(PARAMETERS, 'mountain_divisor', 1, 1024, 1)
+  .name('Mountain Divisor')
+  .onFinishChange(unloadAllLoadedChunks)
+noiseFolder
+  .add(PARAMETERS, 'mountain_threshold', 1, 1024, 1)
+  .name('Mountain Threshold')
+  .onFinishChange(unloadAllLoadedChunks)
+noiseFolder
+  .add(PARAMETERS, 'troty_multiplier', 1, Number.MAX_SAFE_INTEGER, 1)
+  .name('Troty Multiplier')
+  .onFinishChange(unloadAllLoadedChunks)
+noiseFolder
+  .add(PARAMETERS, 'tree_choice_x_multiplier', 1, Number.MAX_SAFE_INTEGER, 1)
+  .name('Tree Choice X Multiplier')
+  .onFinishChange(unloadAllLoadedChunks)
+noiseFolder
+  .add(PARAMETERS, 'tree_choice_z_multiplier', 1, Number.MAX_SAFE_INTEGER, 1)
+  .name('Tree Choice Z Multiplier')
+  .onFinishChange(unloadAllLoadedChunks)
+noiseFolder
+  .add(PARAMETERS, 'tree_a_threshold', 0, 0.4, 0.01)
+  .name('Tree A Threshold')
+  .onFinishChange(unloadAllLoadedChunks)
+noiseFolder
+  .add(PARAMETERS, 'tree_b_threshold', 0.4, 1, 0.01)
+  .name('Tree B Threshold')
+  .onFinishChange(unloadAllLoadedChunks)
 
 const lightsFolder = gui.addFolder('Lights')
 
-lightsFolder.addColor(PARAMETERS, 'ambient_light_color').name('Ambient Color').onChange(function (value) {
-  ambientLight.color.setHex(value)
-})
-lightsFolder.add(PARAMETERS, 'ambient_light_intensity', 0, 1, 0.01).name('Ambient Intensity').onChange(function (value) {
-  ambientLight.intensity = value
-})
-lightsFolder.addColor(PARAMETERS, 'directional_light_color').name('Directional Color').onChange(function (value) {
-  directionalLight.color.setHex(value)
-})
-lightsFolder.add(PARAMETERS, 'directional_light_intensity', 0, 1, 0.01).name('Directional Intensity').onChange(function (value) {
-  directionalLight.intensity = value
-})
-lightsFolder.add(PARAMETERS, 'directional_light_angle', 0, 180, 0.01).name('Directional Angle').listen().onChange(function (value) {
-  directionalLight.position.set(100, 100, -100 / Math.tan(value * Math.PI / 180))
-})
-lightsFolder.add(PARAMETERS, 'moon_light_intensity', 0, 1, 0.01).name('Moon Intensity').onChange(function (value) {
-  moonLight.intensity = value
-})
+lightsFolder
+  .addColor(PARAMETERS, 'ambient_light_color')
+  .name('Ambient Color')
+  .onChange(function (value) {
+    ambientLight.color.setHex(value)
+  })
+lightsFolder
+  .add(PARAMETERS, 'ambient_light_intensity', 0, 1, 0.01)
+  .name('Ambient Intensity')
+  .onChange(function (value) {
+    ambientLight.intensity = value
+  })
+lightsFolder
+  .addColor(PARAMETERS, 'directional_light_color')
+  .name('Directional Color')
+  .onChange(function (value) {
+    directionalLight.color.setHex(value)
+  })
+lightsFolder
+  .add(PARAMETERS, 'directional_light_intensity', 0, 1, 0.01)
+  .name('Directional Intensity')
+  .onChange(function (value) {
+    directionalLight.intensity = value
+  })
+lightsFolder
+  .add(PARAMETERS, 'directional_light_angle', 0, 180, 0.01)
+  .name('Directional Angle')
+  .listen()
+  .onChange(function (value) {
+    directionalLight.position.set(100, 100, -100 / Math.tan((value * Math.PI) / 180))
+  })
+lightsFolder
+  .add(PARAMETERS, 'moon_light_intensity', 0, 1, 0.01)
+  .name('Moon Intensity')
+  .onChange(function (value) {
+    if (nightTime) {
+      moonLight.intensity = value
+    }
+  })
 
 const hudFolder = gui.addFolder('HUD')
 
-hudFolder.add(HUD, 'camera_position').name('Camera Position').listen().disable()
-hudFolder.add(HUD, 'num_of_loaded_chunks').name('Number of Loaded Chunks').listen().disable()
+hudFolder
+  .add(HUD, 'camera_position')
+  .name('Camera Position')
+  .listen()
+  .disable()
+hudFolder
+  .add(HUD, 'num_of_loaded_chunks')
+  .name('Number of Loaded Chunks')
+  .listen()
+  .disable()
 hudFolder.add(HUD, 'mode').name('Mode').listen().disable()
 hudFolder.add(HUD, 'current_score').name('Current Score').listen().disable()
 
@@ -546,8 +675,6 @@ handleMaterialSpecificControllers(PARAMETERS.chunk_material)
 
 /// ////////////////////////////////////////////////////////////////////////////
 // Animate
-
-let nightTime = false
 
 function itsDayTime () {
   nightTime = false
@@ -561,16 +688,21 @@ function updateDayNight () {
     setTimeout(itsDayTime, NIGHT_TIME_FACTOR / PARAMETERS.day_night_speed)
   }
   PARAMETERS.directional_light_angle %= 180
-  directionalLight.position.set(100, 100, -100 / Math.tan(PARAMETERS.directional_light_angle * Math.PI / 180))
+  directionalLight.position.set(100, 100, -100 / Math.tan((PARAMETERS.directional_light_angle * Math.PI) / 180))
   updateNightSky()
 }
 
 function updateNightSky () {
-  const darkeningFactor = (-Math.sin(PARAMETERS.directional_light_angle * Math.PI / 180) + 1) * 100
+  const darkeningFactor = (-Math.sin((PARAMETERS.directional_light_angle * Math.PI) / 180) + 1) * 100
   const currentSkyColor = tinycolor('#' + PARAMETERS.sky_color.toString(16))
   const newSkyColor = parseInt(currentSkyColor.darken(darkeningFactor).toString().substring(1), 16)
   scene.background = new THREE.Color(newSkyColor)
   scene.fog = new THREE.FogExp2(newSkyColor, PARAMETERS.fog_density)
+  if (nightTime) {
+    moonLight.intensity = PARAMETERS.moon_light_intensity
+  } else {
+    moonLight.intensity = 0
+  }
 }
 
 function animate () {
