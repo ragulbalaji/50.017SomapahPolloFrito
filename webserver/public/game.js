@@ -507,11 +507,7 @@ function handleMaterialSpecificControllers (materialName) {
         })
     } else if (materialParams === 'map') {
       materialSpecificParamsFolder
-        .add(
-          MATERIAL_PARAMETERS[materialName],
-          materialParams,
-          Object.keys(TEXTURES)
-        )
+        .add(MATERIAL_PARAMETERS[materialName], materialParams, Object.keys(TEXTURES))
         .name('Texture Map')
         .onChange(function (value) {
           MATERIALS[materialName].map = TEXTURES[value]
