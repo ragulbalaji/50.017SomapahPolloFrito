@@ -687,7 +687,6 @@ function updateDayNight () {
   }
   PARAMETERS.directional_light_angle %= 180
   directionalLight.position.set(100, 100, -100 / Math.tan((PARAMETERS.directional_light_angle * Math.PI) / 180))
-  updateNightSky()
 }
 
 function updateNightSky () {
@@ -702,9 +701,8 @@ function animate () {
   if (PARAMETERS.day_night_speed !== 0) {
     if (!nightTime) {
       updateDayNight()
-    } else {
-      updateNightSky()
     }
+    updateNightSky()
   }
 
   // Prevent user from moving when the pointer is not locked
