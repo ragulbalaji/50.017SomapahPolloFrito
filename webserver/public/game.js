@@ -646,7 +646,7 @@ lightsFolder
   .add(PARAMETERS, 'moon_light_intensity', 0, 1, 0.01)
   .name('Moon Intensity')
   .onChange(function (value) {
-    if (nightTime) {
+    if (nightTime || PARAMETERS.day_night_speed === 0) {
       moonLight.intensity = value
     }
   })
