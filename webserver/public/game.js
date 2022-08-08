@@ -674,6 +674,7 @@ handleMaterialSpecificControllers(PARAMETERS.chunk_material)
 
 function itsDayTime () {
   nightTime = false
+  moonLight.intensity = 0
 }
 
 function updateDayNight () {
@@ -681,6 +682,7 @@ function updateDayNight () {
   if (PARAMETERS.directional_light_angle >= 180) {
     PARAMETERS.directional_light_angle = 0
     nightTime = true
+    moonLight.intensity = PARAMETERS.moon_light_intensity
     setTimeout(itsDayTime, NIGHT_TIME_FACTOR / PARAMETERS.day_night_speed)
   }
   PARAMETERS.directional_light_angle %= 180
@@ -694,11 +696,6 @@ function updateNightSky () {
   const newSkyColor = parseInt(currentSkyColor.darken(darkeningFactor).toString().substring(1), 16)
   scene.background = new THREE.Color(newSkyColor)
   scene.fog = new THREE.FogExp2(newSkyColor, PARAMETERS.fog_density)
-  if (nightTime) {
-    moonLight.intensity = PARAMETERS.moon_light_intensity
-  } else {
-    moonLight.intensity = 0
-  }
 }
 
 function animate () {
